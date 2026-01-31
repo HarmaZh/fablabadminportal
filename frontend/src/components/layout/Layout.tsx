@@ -21,51 +21,51 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-md border-b-2 border-pale-sky/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold text-gray-900">
+              <Link to="/" className="text-2xl font-bold text-jet-black hover:text-primary-600 transition-colors">
                 FabLab Admin
               </Link>
             </div>
 
             <div className="flex items-center gap-6">
-              <nav className="flex gap-4">
+              <nav className="flex gap-2">
                 <Link
                   to="/"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                     isActive('/')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'text-jet-black hover:bg-pale-sky hover:shadow-sm'
                   }`}
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/inventory"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                     isActive('/inventory')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'text-jet-black hover:bg-pale-sky hover:shadow-sm'
                   }`}
                 >
                   Inventory
                 </Link>
               </nav>
 
-              <div className="flex items-center gap-4 border-l pl-4">
+              <div className="flex items-center gap-4 border-l-2 border-pale-sky pl-4">
                 <div className="text-sm">
-                  <p className="font-medium text-gray-900">
+                  <p className="font-semibold text-jet-black">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-gray-500 text-xs">{user?.role}</p>
+                  <p className="text-primary-600 text-xs font-medium">{user?.role}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  className="text-sm text-red-600 hover:text-red-700 font-semibold px-3 py-1 hover:bg-red-50 rounded-md transition-colors"
                 >
                   Logout
                 </button>

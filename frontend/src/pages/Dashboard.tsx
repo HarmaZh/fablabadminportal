@@ -100,12 +100,12 @@ export const Dashboard: React.FC = () => {
             </p>
           </Link>
 
-          <div className="card bg-gradient-to-br from-cool-steel/20 to-steel-gray/20 opacity-70">
-            <h3 className="font-bold text-xl mb-3 text-jet-black">👥 Students (Coming Soon)</h3>
-            <p className="text-primary-600 font-medium">
-              Manage student registrations
+          <Link to="/students" className="card bg-gradient-to-br from-light-blue to-cool-steel hover:shadow-xl transition-all transform hover:-translate-y-1">
+            <h3 className="font-bold text-xl mb-3 text-jet-black">👥 Manage Students</h3>
+            <p className="text-primary-700 font-medium">
+              View and manage student registrations
             </p>
-          </div>
+          </Link>
 
           <div className="card bg-gradient-to-br from-cool-steel/20 to-steel-gray/20 opacity-70">
             <h3 className="font-bold text-xl mb-3 text-jet-black">📚 Classes (Coming Soon)</h3>

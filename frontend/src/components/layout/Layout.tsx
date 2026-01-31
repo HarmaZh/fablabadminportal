@@ -54,6 +54,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   Inventory
                 </Link>
+                <Link
+                  to="/students"
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    isActive('/students')
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'text-jet-black hover:bg-pale-sky hover:shadow-sm'
+                  }`}
+                >
+                  Students
+                </Link>
               </nav>
 
               <div className="flex items-center gap-4 border-l-2 border-pale-sky pl-4">

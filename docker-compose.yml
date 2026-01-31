@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fablab_postgres
+    environment:
+      POSTGRES_USER: fablab_user
+      POSTGRES_PASSWORD: fablab_password
+      POSTGRES_DB: fablab_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

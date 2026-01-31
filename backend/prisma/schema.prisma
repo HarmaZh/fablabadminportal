@@ -1,0 +1,182 @@
+// Prisma Schema for FabLab Admin Portal
+// This schema is designed to be easily modifiable - you can add/remove fields anytime!
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// =============================================================================
+// USER MANAGEMENT
+// =============================================================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+  firstName String
+  lastName  String
+  role      UserRole @default(STAFF)
+  active    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  inventoryLogs InventoryLog[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  INSTRUCTOR  // For future class management
+}
+
+// =============================================================================
+// INVENTORY MANAGEMENT
+// =============================================================================
+
+model InventoryItem {
+  id          String            @id @default(uuid())
+  itemId      String            @unique  // Custom ID (e.g., "CHOC-001")
+  name        String
+  type        InventoryType
+  price       Decimal           @db.Decimal(10, 2)
+  quantity    Int               @default(0)
+  minStock    Int               @default(0)  // For stock alerts
+  status      InventoryStatus
+  notes       String?           @db.Text
+  imageUrl    String?           // For future image uploads
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  createdBy   String?
+
+  // Relations
+  logs        InventoryLog[]
+
+  @@index([type])
+  @@index([status])
+  @@map("inventory_items")
+}
+
+enum InventoryType {
+  CHOCOLATE
+  SOAP
+  PINS
+  DRONES
+  TOOLS
+  MATERIALS
+  OTHER
+}
+
+enum InventoryStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+  DISCONTINUED
+}
+
+// =============================================================================
+// AUDIT TRAIL
+// =============================================================================
+
+model InventoryLog {
+  id        String        @id @default(uuid())
+  itemId    String
+  item      InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action    LogAction
+  oldValue  Json?         // Store previous state
+  newValue  Json?         // Store new state
+  quantity  Int?          // For stock changes
+  notes     String?
+
+  createdAt DateTime      @default(now())
+
+  @@index([itemId])
+  @@index([createdAt])
+  @@map("inventory_logs")
+}
+
+enum LogAction {
+  CREATED
+  UPDATED
+  DELETED
+  STOCK_ADDED
+  STOCK_REMOVED
+}
+
+// =============================================================================
+// FUTURE: STUDENT REGISTRATION
+// =============================================================================
+// Uncomment when ready to implement student registration
+//
+// model Student {
+//   id          String   @id @default(uuid())
+//   studentId   String   @unique
+//   firstName   String
+//   lastName    String
+//   email       String   @unique
+//   phone       String?
+//   grade       String?
+//   schoolId    String?
+//
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//
+//   enrollments CourseEnrollment[]
+//
+//   @@map("students")
+// }
+
+// =============================================================================
+// FUTURE: CLASS MANAGEMENT
+// =============================================================================
+// Uncomment when ready to implement class management
+//
+// model Course {
+//   id          String   @id @default(uuid())
+//   courseId    String   @unique
+//   name        String
+//   description String?  @db.Text
+//   instructor  String?
+//   maxStudents Int?
+//   startDate   DateTime?
+//   endDate     DateTime?
+//
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//
+//   enrollments CourseEnrollment[]
+//
+//   @@map("courses")
+// }
+
+// model CourseEnrollment {
+//   id         String           @id @default(uuid())
+//   studentId  String
+//   student    Student          @relation(fields: [studentId], references: [id])
+//   courseId   String
+//   course     Course           @relation(fields: [courseId], references: [id])
+//
+//   status     EnrollmentStatus @default(ENROLLED)
+//   enrolledAt DateTime         @default(now())
+//
+//   @@unique([studentId, courseId])
+//   @@map("course_enrollments")
+// }
+
+// enum EnrollmentStatus {
+//   ENROLLED
+//   COMPLETED
+//   DROPPED
+// }

@@ -7,6 +7,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
 import { Students } from './pages/Students';
+import { Classes } from './pages/Classes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,6 +88,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Students />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/classes"
+        element={
+          <ProtectedRoute>
+            <Classes />
           </ProtectedRoute>
         }
       />

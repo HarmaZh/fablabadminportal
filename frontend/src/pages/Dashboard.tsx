@@ -107,12 +107,12 @@ export const Dashboard: React.FC = () => {
             </p>
           </Link>
 
-          <div className="card bg-gradient-to-br from-cool-steel/20 to-steel-gray/20 opacity-70">
-            <h3 className="font-bold text-xl mb-3 text-jet-black">📚 Classes (Coming Soon)</h3>
-            <p className="text-primary-600 font-medium">
+          <Link to="/classes" className="card bg-gradient-to-br from-pale-sky to-light-blue hover:shadow-xl transition-all transform hover:-translate-y-1">
+            <h3 className="font-bold text-xl mb-3 text-jet-black">📚 Class Management</h3>
+            <p className="text-primary-700 font-medium">
               Manage class schedules and enrollments
             </p>
-          </div>
+          </Link>
         </div>
       </div>
     </div>

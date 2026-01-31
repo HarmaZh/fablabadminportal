@@ -64,6 +64,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   Students
                 </Link>
+                <Link
+                  to="/classes"
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                    isActive('/classes')
+                      ? 'bg-primary-500 text-white shadow-md'
+                      : 'text-jet-black hover:bg-pale-sky hover:shadow-sm'
+                  }`}
+                >
+                  Classes
+                </Link>
               </nav>
 
               <div className="flex items-center gap-4 border-l-2 border-pale-sky pl-4">

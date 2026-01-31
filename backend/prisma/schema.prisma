@@ -2,7 +2,7 @@
 // This schema is designed to be easily modifiable - you can add/remove fields anytime!
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -20,7 +20,7 @@ model User {
   password  String   // Hashed with bcrypt
   firstName String
   lastName  String
-  role      UserRole @default(STAFF)
+  role      String @default("STAFF")
   active    Boolean  @default(true)
 
   createdAt DateTime @default(now())
@@ -32,11 +32,8 @@ model User {
   @@map("users")
 }
 
-enum UserRole {
-  ADMIN
-  STAFF
-  INSTRUCTOR  // For future class management
-}
+// Note: Using String instead of enum for SQLite compatibility
+// Valid values: ADMIN, STAFF, INSTRUCTOR
 
 // =============================================================================
 // INVENTORY MANAGEMENT
@@ -46,12 +43,12 @@ model InventoryItem {
   id          String            @id @default(uuid())
   itemId      String            @unique  // Custom ID (e.g., "CHOC-001")
   name        String
-  type        InventoryType
-  price       Decimal           @db.Decimal(10, 2)
+  type        String
+  price       Decimal
   quantity    Int               @default(0)
   minStock    Int               @default(0)  // For stock alerts
-  status      InventoryStatus
-  notes       String?           @db.Text
+  status      String
+  notes       String?
   imageUrl    String?           // For future image uploads
 
   createdAt   DateTime          @default(now())
@@ -66,22 +63,9 @@ model InventoryItem {
   @@map("inventory_items")
 }
 
-enum InventoryType {
-  CHOCOLATE
-  SOAP
-  PINS
-  DRONES
-  TOOLS
-  MATERIALS
-  OTHER
-}
-
-enum InventoryStatus {
-  IN_STOCK
-  LOW_STOCK
-  OUT_OF_STOCK
-  DISCONTINUED
-}
+// Note: Using String instead of enum for SQLite compatibility
+// InventoryType valid values: CHOCOLATE, SOAP, PINS, DRONES, TOOLS, MATERIALS, OTHER
+// InventoryStatus valid values: IN_STOCK, LOW_STOCK, OUT_OF_STOCK, DISCONTINUED
 
 // =============================================================================
 // AUDIT TRAIL
@@ -94,9 +78,9 @@ model InventoryLog {
   userId    String?
   user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  action    LogAction
-  oldValue  Json?         // Store previous state
-  newValue  Json?         // Store new state
+  action    String
+  oldValue  String?       // Store previous state as JSON string
+  newValue  String?       // Store new state as JSON string
   quantity  Int?          // For stock changes
   notes     String?
 
@@ -107,13 +91,8 @@ model InventoryLog {
   @@map("inventory_logs")
 }
 
-enum LogAction {
-  CREATED
-  UPDATED
-  DELETED
-  STOCK_ADDED
-  STOCK_REMOVED
-}
+// Note: Using String instead of enum for SQLite compatibility
+// LogAction valid values: CREATED, UPDATED, DELETED, STOCK_ADDED, STOCK_REMOVED
 
 // =============================================================================
 // FUTURE: STUDENT REGISTRATION

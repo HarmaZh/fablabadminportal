@@ -83,12 +83,66 @@ const mockClasses = [
   },
 ];
 
+const COLOR_CLASSES = [
+  { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800' },
+  { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
+  { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800' },
+  { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-800' },
+  { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-800' },
+  { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-800' },
+];
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 9); // 9 AM through 9 PM
+
+function parseSchedule(schedule: string): { days: number[]; startHour: number; endHour: number } | null {
+  const dayMap: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+
+  const match = schedule.match(/(\d+)-(\d+)\s*(AM|PM)/);
+  if (!match) return null;
+
+  const startNum = parseInt(match[1]);
+  const endNum = parseInt(match[2]);
+  const period = match[3];
+
+  let startHour: number, endHour: number;
+
+  if (period === 'PM') {
+    if (startNum > endNum) {
+      // "10-1 PM" → 10 AM to 1 PM
+      startHour = startNum;
+      endHour = endNum + 12;
+    } else {
+      startHour = startNum === 12 ? 12 : startNum + 12;
+      endHour = endNum === 12 ? 12 : endNum + 12;
+    }
+  } else {
+    startHour = startNum === 12 ? 0 : startNum;
+    endHour = endNum === 12 ? 0 : endNum;
+  }
+
+  const days: number[] = [];
+  for (const [name, idx] of Object.entries(dayMap)) {
+    if (schedule.includes(name)) days.push(idx);
+  }
+
+  return { days, startHour, endHour };
+}
+
+function formatHour(hour: number): string {
+  if (hour === 0) return '12 AM';
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return '12 PM';
+  return `${hour - 12} PM`;
+}
+
 export const Classes: React.FC = () => {
   const [classes] = useState(mockClasses);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [activeView, setActiveView] = useState<'table' | 'calendar'>('table');
 
   const filteredClasses = classes.filter((cls) => {
     const matchesSearch =
@@ -126,9 +180,33 @@ export const Classes: React.FC = () => {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-jet-black">Class Management</h1>
-        <button onClick={handleAddNew} className="btn-primary">
-          + Add Class
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-pale-sky/20 rounded-lg p-1">
+            <button
+              onClick={() => setActiveView('table')}
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
+                activeView === 'table'
+                  ? 'bg-white text-jet-black shadow-sm'
+                  : 'text-primary-700 hover:text-jet-black'
+              }`}
+            >
+              Table
+            </button>
+            <button
+              onClick={() => setActiveView('calendar')}
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
+                activeView === 'calendar'
+                  ? 'bg-white text-jet-black shadow-sm'
+                  : 'text-primary-700 hover:text-jet-black'
+              }`}
+            >
+              Calendar
+            </button>
+          </div>
+          <button onClick={handleAddNew} className="btn-primary">
+            + Add Class
+          </button>
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -197,6 +275,7 @@ export const Classes: React.FC = () => {
       </div>
 
       {/* Classes Table */}
+      {activeView === 'table' && (
       <div className="card overflow-x-auto">
         {filteredClasses.length === 0 ? (
           <div className="text-center py-12">
@@ -300,6 +379,84 @@ export const Classes: React.FC = () => {
           </table>
         )}
       </div>
+      )}
+
+      {/* Weekly Calendar */}
+      {activeView === 'calendar' && (
+        <div className="card overflow-x-auto">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '4rem repeat(7, 1fr)',
+              gridTemplateRows: '2.5rem repeat(13, 3rem)',
+              minWidth: '700px',
+            }}
+          >
+            {/* Corner cell */}
+            <div className="border-b-2 border-pale-sky border-r border-pale-sky/30 bg-pale-sky/10" />
+
+            {/* Day headers */}
+            {DAYS.map((day, dayIdx) => (
+              <div
+                key={day}
+                className="border-b-2 border-pale-sky border-l border-pale-sky/30 bg-pale-sky/10 flex items-center justify-center text-xs font-bold text-jet-black uppercase tracking-wider"
+                style={{ gridColumn: dayIdx + 2, gridRow: 1 }}
+              >
+                {day}
+              </div>
+            ))}
+
+            {/* Time labels */}
+            {HOURS.map((hour, hourIdx) => (
+              <div
+                key={hour}
+                className="border-b border-pale-sky/20 flex items-start justify-end pr-2 pt-0.5"
+                style={{ gridColumn: 1, gridRow: hourIdx + 2 }}
+              >
+                <span className="text-xs text-primary-600 font-medium">{formatHour(hour)}</span>
+              </div>
+            ))}
+
+            {/* Background grid cells */}
+            {HOURS.map((_, hourIdx) =>
+              DAYS.map((_, dayIdx) => (
+                <div
+                  key={`bg-${hourIdx}-${dayIdx}`}
+                  className="border-b border-pale-sky/20 border-l border-pale-sky/30"
+                  style={{ gridColumn: dayIdx + 2, gridRow: hourIdx + 2 }}
+                />
+              ))
+            )}
+
+            {/* Event blocks */}
+            {filteredClasses.flatMap((cls) => {
+              const classIdx = classes.findIndex((c) => c.id === cls.id);
+              const parsed = parseSchedule(cls.schedule);
+              if (!parsed) return [];
+              const color = COLOR_CLASSES[classIdx % COLOR_CLASSES.length];
+
+              return parsed.days.map((dayIdx) => (
+                <div
+                  key={`${cls.id}-${dayIdx}`}
+                  style={{
+                    gridColumn: dayIdx + 2,
+                    gridRow: `${parsed.startHour - 7} / ${parsed.endHour - 7}`,
+                    zIndex: 1,
+                  }}
+                  className={`${color.bg} ${color.border} ${color.text} border rounded p-1 m-0.5 overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer`}
+                  onClick={() => handleEdit(cls)}
+                >
+                  <p className="text-xs font-bold truncate">{cls.name}</p>
+                  <div>
+                    <p className="text-xs">{formatHour(parsed.startHour)}–{formatHour(parsed.endHour)}</p>
+                    <p className="text-xs opacity-75 truncate">{cls.instructor}</p>
+                  </div>
+                </div>
+              ));
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       <Modal

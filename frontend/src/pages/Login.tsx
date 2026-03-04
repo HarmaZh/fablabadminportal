@@ -44,6 +44,13 @@ export const Login: React.FC = () => {
       <div className="max-w-md w-full px-4">
         <div className="bg-white rounded-xl shadow-2xl p-8 border border-pale-sky/50">
           <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-primary-100 rounded-2xl">
+                <svg className="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.153-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+              </div>
+            </div>
             <h1 className="text-4xl font-bold text-jet-black mb-2">FabLab Admin</h1>
             <p className="text-primary-600 font-medium">
               Sign in to manage your inventory
@@ -92,7 +99,7 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-lg py-3 mt-6"
+              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>

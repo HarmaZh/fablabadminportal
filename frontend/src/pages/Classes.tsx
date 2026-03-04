@@ -5,80 +5,80 @@ import { Modal } from '../components/common/Modal';
 const mockClasses = [
   {
     id: '1',
-    courseId: 'CLS-2024-001',
+    courseId: 'CLS-2026-001',
     name: 'Introduction to 3D Printing',
     instructor: 'John Smith',
     schedule: 'Mon & Wed 4-6 PM',
     capacity: 15,
     enrolled: 12,
     status: 'Active',
-    startDate: '2024-01-15',
-    endDate: '2024-03-15',
+    startDate: '2026-01-05',
+    endDate: '2026-06-30',
     description: 'Learn the basics of 3D modeling and printing',
   },
   {
     id: '2',
-    courseId: 'CLS-2024-002',
+    courseId: 'CLS-2026-002',
     name: 'Advanced Laser Cutting',
     instructor: 'Sarah Johnson',
     schedule: 'Tue & Thu 3-5 PM',
     capacity: 12,
     enrolled: 8,
     status: 'Active',
-    startDate: '2024-01-16',
-    endDate: '2024-03-20',
+    startDate: '2026-01-06',
+    endDate: '2026-05-30',
     description: 'Advanced techniques for laser cutting and design',
   },
   {
     id: '3',
-    courseId: 'CLS-2024-003',
+    courseId: 'CLS-2026-003',
     name: 'Electronics Basics',
     instructor: 'Mike Chen',
     schedule: 'Wed 6-8 PM',
     capacity: 15,
     enrolled: 15,
     status: 'Active',
-    startDate: '2024-01-10',
-    endDate: '2024-03-28',
+    startDate: '2026-02-01',
+    endDate: '2026-05-30',
     description: 'Introduction to circuits and basic electronics',
   },
   {
     id: '4',
-    courseId: 'CLS-2024-004',
+    courseId: 'CLS-2026-004',
     name: 'Robotics Workshop',
     instructor: 'Emily Davis',
     schedule: 'Fri 4-7 PM',
     capacity: 10,
     enrolled: 5,
-    status: 'Upcoming',
-    startDate: '2024-02-02',
-    endDate: '2024-04-12',
+    status: 'Active',
+    startDate: '2026-03-01',
+    endDate: '2026-06-30',
     description: 'Build and program your own robot',
   },
   {
     id: '5',
-    courseId: 'CLS-2023-015',
+    courseId: 'CLS-2025-015',
     name: 'Woodworking 101',
     instructor: 'David Brown',
     schedule: 'Sat 10-1 PM',
     capacity: 10,
     enrolled: 10,
     status: 'Completed',
-    startDate: '2023-09-15',
-    endDate: '2023-12-15',
+    startDate: '2025-09-15',
+    endDate: '2025-12-15',
     description: 'Learn essential woodworking skills and safety',
   },
   {
     id: '6',
-    courseId: 'CLS-2024-005',
+    courseId: 'CLS-2026-005',
     name: 'CNC Machining',
     instructor: 'Lisa White',
     schedule: 'Thu 5-7 PM',
     capacity: 8,
     enrolled: 6,
     status: 'Active',
-    startDate: '2024-01-18',
-    endDate: '2024-03-21',
+    startDate: '2026-01-18',
+    endDate: '2026-05-30',
     description: 'Master CNC machine operation and programming',
   },
 ];
@@ -136,13 +136,35 @@ function formatHour(hour: number): string {
   return `${hour - 12} PM`;
 }
 
+function getMonthGrid(year: number, month: number): (Date | null)[] {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const grid: (Date | null)[] = [];
+  for (let i = 0; i < firstDay.getDay(); i++) grid.push(null);
+  for (let d = 1; d <= lastDay.getDate(); d++) grid.push(new Date(year, month, d));
+  while (grid.length % 7 !== 0) grid.push(null);
+  return grid;
+}
+
+function getClassesForDay(date: Date, cls: typeof mockClasses): typeof mockClasses {
+  const dateStr = date.toISOString().split('T')[0];
+  // JS getDay(): Sun=0…Sat=6 → dayMap used by parseSchedule: Mon=0…Sun=6
+  const fabDow = date.getDay() === 0 ? 6 : date.getDay() - 1;
+  return cls.filter((c) => {
+    if (dateStr < c.startDate || dateStr > c.endDate) return false;
+    const parsed = parseSchedule(c.schedule);
+    return parsed ? parsed.days.includes(fabDow) : false;
+  });
+}
+
 export const Classes: React.FC = () => {
   const [classes] = useState(mockClasses);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any>(null);
-  const [activeView, setActiveView] = useState<'table' | 'calendar'>('table');
+  const [activeView, setActiveView] = useState<'table' | 'week' | 'month'>('table');
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   const filteredClasses = classes.filter((cls) => {
     const matchesSearch =
@@ -176,6 +198,10 @@ export const Classes: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const monthGrid = getMonthGrid(calendarMonth.getFullYear(), calendarMonth.getMonth());
+  const prevMonth = () => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1));
+  const nextMonth = () => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1));
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
@@ -193,14 +219,24 @@ export const Classes: React.FC = () => {
               Table
             </button>
             <button
-              onClick={() => setActiveView('calendar')}
+              onClick={() => setActiveView('week')}
               className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
-                activeView === 'calendar'
+                activeView === 'week'
                   ? 'bg-white text-jet-black shadow-sm'
                   : 'text-primary-700 hover:text-jet-black'
               }`}
             >
-              Calendar
+              Week
+            </button>
+            <button
+              onClick={() => setActiveView('month')}
+              className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
+                activeView === 'month'
+                  ? 'bg-white text-jet-black shadow-sm'
+                  : 'text-primary-700 hover:text-jet-black'
+              }`}
+            >
+              Month
             </button>
           </div>
           <button onClick={handleAddNew} className="btn-primary">
@@ -382,7 +418,7 @@ export const Classes: React.FC = () => {
       )}
 
       {/* Weekly Calendar */}
-      {activeView === 'calendar' && (
+      {activeView === 'week' && (
         <div className="card overflow-x-auto">
           <div
             style={{
@@ -453,6 +489,92 @@ export const Classes: React.FC = () => {
                   </div>
                 </div>
               ));
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Monthly Calendar */}
+      {activeView === 'month' && (
+        <div className="card">
+          {/* Month navigation */}
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={prevMonth}
+              className="p-2 hover:bg-pale-sky/20 rounded-lg transition-colors text-jet-black"
+              aria-label="Previous month"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-lg font-bold text-jet-black">
+              {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </h2>
+            <button
+              onClick={nextMonth}
+              className="p-2 hover:bg-pale-sky/20 rounded-lg transition-colors text-jet-black"
+              aria-label="Next month"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Day-of-week headers */}
+          <div className="grid grid-cols-7 border-b border-pale-sky/30">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div
+                key={day}
+                className="text-center text-xs font-bold text-jet-black uppercase tracking-wide py-2"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Day grid */}
+          <div className="grid grid-cols-7 border-t border-l border-pale-sky/30">
+            {monthGrid.map((date, idx) => {
+              const isToday = date?.toDateString() === new Date().toDateString();
+              const dayClasses = date ? getClassesForDay(date, filteredClasses) : [];
+              return (
+                <div
+                  key={idx}
+                  className={`border-b border-r border-pale-sky/30 min-h-[100px] p-2 ${
+                    !date ? 'bg-pale-sky/5' : 'hover:bg-pale-sky/5 transition-colors'
+                  }`}
+                >
+                  {date && (
+                    <>
+                      <div
+                        className={`text-sm font-semibold mb-1 w-7 h-7 flex items-center justify-center rounded-full ${
+                          isToday ? 'bg-primary-500 text-white' : 'text-jet-black'
+                        }`}
+                      >
+                        {date.getDate()}
+                      </div>
+                      <div className="space-y-1">
+                        {dayClasses.map((cls) => {
+                          const colorIdx = classes.findIndex((c) => c.id === cls.id);
+                          const color = COLOR_CLASSES[colorIdx % COLOR_CLASSES.length];
+                          return (
+                            <div
+                              key={cls.id}
+                              onClick={() => handleEdit(cls)}
+                              title={`${cls.name} — ${cls.schedule}`}
+                              className={`${color.bg} ${color.text} text-xs px-1.5 py-0.5 rounded truncate cursor-pointer hover:shadow-sm transition-shadow`}
+                            >
+                              {cls.name}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
             })}
           </div>
         </div>
@@ -596,9 +718,9 @@ export const Classes: React.FC = () => {
       </Modal>
 
       {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800 font-medium">
-          📝 <strong>Note:</strong> This page uses sample data for UI demonstration.
+      <div className="mt-6 p-4 bg-pale-sky/20 border border-pale-sky rounded-lg">
+        <p className="text-sm text-jet-black font-medium">
+          <strong>Note:</strong> This page uses sample data for UI demonstration.
           Backend integration for class management will be added when ready.
         </p>
       </div>

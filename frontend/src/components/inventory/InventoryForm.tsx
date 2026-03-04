@@ -45,7 +45,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-semibold text-jet-black mb-1">
             Item ID *
           </label>
           <input
@@ -60,7 +60,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-semibold text-jet-black mb-1">
             Name *
           </label>
           <input
@@ -76,7 +76,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-semibold text-jet-black mb-1">
             Type *
           </label>
           <select {...register('type')} className="input">
@@ -94,7 +94,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-semibold text-jet-black mb-1">
             Price *
           </label>
           <input
@@ -112,7 +112,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-semibold text-jet-black mb-1">
             Quantity *
           </label>
           <input
@@ -127,7 +127,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-semibold text-jet-black mb-1">
             Min Stock *
           </label>
           <input
@@ -172,7 +172,7 @@ export const InventoryFormComponent: React.FC<InventoryFormProps> = ({
         )}
       </div>
 
-      <div className="flex gap-3 pt-4 border-t">
+      <div className="flex gap-3 pt-4 border-t border-pale-sky/30">
         <button
           type="submit"
           disabled={isSubmitting}

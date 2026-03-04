@@ -21,11 +21,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 
         {/* Modal */}
         <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold">{title}</h2>
+          <div className="sticky top-0 bg-white border-b border-pale-sky/30 px-6 py-4 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-jet-black">{title}</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-cool-gray hover:text-jet-black transition-colors"
             >
               <svg
                 className="w-6 h-6"

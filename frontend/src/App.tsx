@@ -8,6 +8,9 @@ import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
 import { Students } from './pages/Students';
 import { Classes } from './pages/Classes';
+import { Equipment } from './pages/Equipment';
+import { Staff } from './pages/Staff';
+import { Attendance } from './pages/Attendance';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +99,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Classes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/equipment"
+        element={
+          <ProtectedRoute>
+            <Equipment />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff"
+        element={
+          <ProtectedRoute>
+            <Staff />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendance"
+        element={
+          <ProtectedRoute>
+            <Attendance />
           </ProtectedRoute>
         }
       />

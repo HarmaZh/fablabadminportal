@@ -393,9 +393,9 @@ export const Students: React.FC = () => {
       </Modal>
 
       {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800 font-medium">
-          📝 <strong>Note:</strong> This page is using sample data for UI demonstration.
+      <div className="mt-6 p-4 bg-pale-sky/20 border border-pale-sky rounded-lg">
+        <p className="text-sm text-jet-black font-medium">
+          <strong>Note:</strong> This page is using sample data for UI demonstration.
           The backend integration for student management will be added when you're ready to
           connect it to your database.
         </p>

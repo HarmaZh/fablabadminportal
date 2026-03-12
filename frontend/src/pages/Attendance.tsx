@@ -9,7 +9,8 @@ const mockSessions = [
     instructor: 'Maria Garcia',
     date: '2026-02-24',
     totalStudents: 12,
-    present: 11,
+    present: 10,
+    late: 1,
     absent: 1,
   },
   {
@@ -20,6 +21,7 @@ const mockSessions = [
     date: '2026-02-17',
     totalStudents: 12,
     present: 9,
+    late: 0,
     absent: 3,
   },
   {
@@ -29,7 +31,8 @@ const mockSessions = [
     instructor: 'James Lee',
     date: '2026-02-25',
     totalStudents: 8,
-    present: 8,
+    present: 7,
+    late: 1,
     absent: 0,
   },
   {
@@ -40,6 +43,7 @@ const mockSessions = [
     date: '2026-02-18',
     totalStudents: 8,
     present: 6,
+    late: 0,
     absent: 2,
   },
   {
@@ -49,7 +53,8 @@ const mockSessions = [
     instructor: 'Priya Patel',
     date: '2026-02-26',
     totalStudents: 15,
-    present: 13,
+    present: 12,
+    late: 1,
     absent: 2,
   },
   {
@@ -60,6 +65,7 @@ const mockSessions = [
     date: '2026-02-19',
     totalStudents: 15,
     present: 10,
+    late: 0,
     absent: 5,
   },
   {
@@ -70,6 +76,7 @@ const mockSessions = [
     date: '2026-01-27',
     totalStudents: 12,
     present: 7,
+    late: 0,
     absent: 5,
   },
   {
@@ -79,7 +86,8 @@ const mockSessions = [
     instructor: 'Priya Patel',
     date: '2026-01-29',
     totalStudents: 15,
-    present: 15,
+    present: 14,
+    late: 1,
     absent: 0,
   },
 ];
@@ -116,14 +124,14 @@ const formatDate = (dateStr: string) => {
 
 const getAttendanceBadge = (present: number, total: number) => {
   const pct = total > 0 ? (present / total) * 100 : 0;
-  if (pct >= 80) return 'bg-green-100 text-green-700';
-  if (pct >= 50) return 'bg-yellow-100 text-yellow-700';
+  if (pct >= 80) return 'bg-emerald-100 text-emerald-700';
+  if (pct >= 50) return 'bg-amber-100 text-amber-700';
   return 'bg-red-100 text-red-700';
 };
 
 const getRosterBadge = (status: string) => {
-  if (status === 'Present') return 'bg-green-100 text-green-700';
-  if (status === 'Late') return 'bg-yellow-100 text-yellow-700';
+  if (status === 'Present') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'Late') return 'bg-amber-100 text-amber-700';
   return 'bg-red-100 text-red-700';
 };
 
@@ -163,10 +171,10 @@ export const Attendance: React.FC = () => {
   }).length;
 
   const avgRate = sessions.length > 0
-    ? Math.round(sessions.reduce((acc, s) => acc + (s.present / s.totalStudents) * 100, 0) / sessions.length)
+    ? Math.round(sessions.reduce((acc, s) => acc + ((s.present + s.late) / s.totalStudents) * 100, 0) / sessions.length)
     : 0;
 
-  const perfectSessions = sessions.filter((s) => s.absent === 0).length;
+  const perfectSessions = sessions.filter((s) => s.absent === 0 && s.late === 0).length;
   const uniqueClasses = new Set(sessions.map((s) => s.classId)).size;
 
   const uniqueClassOptions = Array.from(
@@ -176,7 +184,7 @@ export const Attendance: React.FC = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-jet-black">Attendance Tracking</h1>
+        <h1 className="text-4xl font-bold text-gray-900">Attendance Tracking</h1>
         <button onClick={() => setIsTakeModalOpen(true)} className="btn-primary">
           + Take Attendance
         </button>
@@ -185,50 +193,50 @@ export const Attendance: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
-          <div className="p-3 bg-primary-100 rounded-xl flex-shrink-0">
+          <div className="stat-icon bg-primary-100">
             <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-primary-500 uppercase tracking-wide mb-1">Sessions This Month</p>
-            <p className="text-3xl font-bold text-jet-black leading-none">{sessionsThisMonth}</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Sessions This Month</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{sessionsThisMonth}</p>
           </div>
         </div>
 
         <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
-          <div className="p-3 bg-green-100 rounded-xl flex-shrink-0">
-            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div className="stat-icon bg-emerald-100">
+            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Avg Attendance Rate</p>
-            <p className="text-3xl font-bold text-jet-black leading-none">{avgRate}%</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Avg Attendance Rate</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{avgRate}%</p>
           </div>
         </div>
 
         <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
-          <div className="p-3 bg-yellow-100 rounded-xl flex-shrink-0">
-            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div className="stat-icon bg-amber-100">
+            <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-yellow-600 uppercase tracking-wide mb-1">Perfect Sessions</p>
-            <p className="text-3xl font-bold text-jet-black leading-none">{perfectSessions}</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Perfect Sessions</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{perfectSessions}</p>
           </div>
         </div>
 
         <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
-          <div className="p-3 bg-blue-100 rounded-xl flex-shrink-0">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div className="stat-icon bg-sky-100">
+            <svg className="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Classes Tracked</p>
-            <p className="text-3xl font-bold text-jet-black leading-none">{uniqueClasses}</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Classes Tracked</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{uniqueClasses}</p>
           </div>
         </div>
       </div>
@@ -237,7 +245,7 @@ export const Attendance: React.FC = () => {
       <div className="card mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">Search</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Search</label>
             <input
               type="text"
               value={search}
@@ -247,7 +255,7 @@ export const Attendance: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">Class</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Class</label>
             <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)} className="input">
               <option value="">All Classes</option>
               {uniqueClassOptions.map(([id, name]) => (
@@ -256,70 +264,74 @@ export const Attendance: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">From</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">From</label>
             <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">To</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">To</label>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" />
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="card overflow-x-auto">
+      <div className="card overflow-x-auto p-0">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-primary-600 text-lg mb-4">No sessions found</p>
+            <p className="text-gray-500 text-lg mb-4">No sessions found</p>
             <button onClick={() => setIsTakeModalOpen(true)} className="btn-primary">Take Attendance</button>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-pale-sky">
-            <thead className="bg-gradient-to-r from-pale-sky/30 to-light-blue/30">
+          <table className="min-w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">Class</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">Instructor</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">Present</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">Absent</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">Attendance %</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-jet-black uppercase tracking-wider">Actions</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Date</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Class</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Instructor</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Present</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Late</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Absent</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Attendance %</th>
+                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-pale-sky/50">
+            <tbody className="divide-y divide-gray-100">
               {filtered.map((session) => {
                 const pct = session.totalStudents > 0
-                  ? Math.round((session.present / session.totalStudents) * 100)
+                  ? Math.round(((session.present + session.late) / session.totalStudents) * 100)
                   : 0;
                 return (
-                  <tr key={session.id} className="hover:bg-pale-sky/10 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-jet-black">
+                  <tr key={session.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {formatDate(session.date)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-jet-black">
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-900">
                       {session.className}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600">
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
                       {session.instructor}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 text-sm font-bold bg-green-100 text-green-700 rounded-full">
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className="text-sm font-semibold text-emerald-700">
                         {session.present}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 text-sm font-bold rounded-full ${
-                        session.absent > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className={`text-sm font-semibold ${session.late > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                        {session.late}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className={`text-sm font-semibold ${session.absent > 0 ? 'text-red-600' : 'text-gray-400'}`}>
                         {session.absent}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 text-sm font-bold rounded-full ${getAttendanceBadge(session.present, session.totalStudents)}`}>
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getAttendanceBadge(session.present + session.late, session.totalStudents)}`}>
                         {pct}%
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => setRosterSession(session)}
                         className="text-primary-600 hover:text-primary-700 font-semibold"
@@ -343,9 +355,10 @@ export const Attendance: React.FC = () => {
       >
         {rosterSession && (
           <div className="space-y-4">
-            <p className="text-sm text-primary-600 font-medium">{formatDate(rosterSession.date)} · {rosterSession.instructor}</p>
+            <p className="text-sm text-gray-500 font-medium">{formatDate(rosterSession.date)} · {rosterSession.instructor}</p>
             <div className="flex gap-4 text-sm font-semibold">
-              <span className="text-green-700">Present: {rosterSession.present}</span>
+              <span className="text-emerald-700">Present: {rosterSession.present}</span>
+              <span className="text-amber-600">Late: {rosterSession.late}</span>
               <span className="text-red-600">Absent: {rosterSession.absent}</span>
             </div>
             <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -356,19 +369,19 @@ export const Attendance: React.FC = () => {
               } as { studentId: string; name: string; status: 'Present' | 'Absent' | 'Late' }))).map((student) => (
                 <div
                   key={student.studentId}
-                  className="flex items-center justify-between px-4 py-3 bg-pale-sky/10 rounded-lg border border-pale-sky/30"
+                  className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg border border-gray-100"
                 >
                   <div>
-                    <p className="text-sm font-medium text-jet-black">{student.name}</p>
-                    <p className="text-xs text-primary-600">{student.studentId}</p>
+                    <p className="text-sm font-medium text-gray-900">{student.name}</p>
+                    <p className="text-xs text-gray-400">{student.studentId}</p>
                   </div>
-                  <span className={`px-3 py-1 text-xs font-bold rounded-full ${getRosterBadge(student.status)}`}>
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getRosterBadge(student.status)}`}>
                     {student.status}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="pt-3 border-t border-pale-sky/30">
+            <div className="pt-3 border-t border-gray-100">
               <button onClick={() => setRosterSession(null)} className="btn-secondary w-full">Close</button>
             </div>
           </div>
@@ -384,7 +397,7 @@ export const Attendance: React.FC = () => {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">Class *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Class *</label>
               <select value={takeClass} onChange={(e) => setTakeClass(e.target.value)} className="input">
                 <option value="">Select Class</option>
                 {uniqueClassOptions.map(([id, name]) => (
@@ -393,26 +406,26 @@ export const Attendance: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">Date *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Date *</label>
               <input type="date" value={takeDate} onChange={(e) => setTakeDate(e.target.value)} className="input" />
             </div>
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-jet-black mb-3">Student Roster</p>
+            <p className="text-sm font-semibold text-gray-700 mb-3">Student Roster</p>
             <div className="space-y-2 max-h-72 overflow-y-auto">
               {MOCK_CLASS_STUDENTS.map((name) => (
                 <div
                   key={name}
-                  className="flex items-center justify-between px-4 py-3 bg-pale-sky/10 rounded-lg border border-pale-sky/30"
+                  className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg border border-gray-100"
                 >
-                  <span className="text-sm font-medium text-jet-black">{name}</span>
+                  <span className="text-sm font-medium text-gray-900">{name}</span>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setPresentMap((prev) => ({ ...prev, [name]: true }))}
-                      className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${
-                        presentMap[name] ? 'bg-green-500 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                        presentMap[name] ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                       }`}
                     >
                       Present
@@ -420,8 +433,8 @@ export const Attendance: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setPresentMap((prev) => ({ ...prev, [name]: false }))}
-                      className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${
-                        !presentMap[name] ? 'bg-red-500 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                        !presentMap[name] ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'
                       }`}
                     >
                       Absent
@@ -432,11 +445,11 @@ export const Attendance: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-sm text-primary-600 font-medium">
+          <div className="text-sm text-gray-500 font-medium">
             {Object.values(presentMap).filter(Boolean).length} / {MOCK_CLASS_STUDENTS.length} present
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-pale-sky/30">
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
             <button
               type="button"
               className="btn-primary flex-1"
@@ -456,8 +469,8 @@ export const Attendance: React.FC = () => {
       </Modal>
 
       {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-pale-sky/20 border border-pale-sky rounded-lg">
-        <p className="text-sm text-jet-black font-medium">
+      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
+        <p className="text-sm text-primary-700 font-medium">
           <strong>Note:</strong> This page uses sample data for UI demonstration.
           Backend integration for attendance tracking will be added when ready.
         </p>

@@ -78,18 +78,18 @@ export const Inventory: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      IN_STOCK: 'bg-green-100 text-green-800',
-      LOW_STOCK: 'bg-yellow-100 text-yellow-800',
-      OUT_OF_STOCK: 'bg-red-100 text-red-800',
-      DISCONTINUED: 'bg-gray-100 text-gray-800',
+      IN_STOCK: 'bg-emerald-100 text-emerald-700',
+      LOW_STOCK: 'bg-amber-100 text-amber-700',
+      OUT_OF_STOCK: 'bg-red-100 text-red-700',
+      DISCONTINUED: 'bg-gray-100 text-gray-600',
     };
     return colors[status as keyof typeof colors] || colors.IN_STOCK;
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-4xl font-bold text-jet-black">Inventory Management</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-4xl font-bold text-gray-900">Inventory Management</h1>
         <button
           onClick={() => {
             setEditingItem(null);
@@ -105,7 +105,7 @@ export const Inventory: React.FC = () => {
       <div className="card mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Search
             </label>
             <input
@@ -118,7 +118,7 @@ export const Inventory: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Type
             </label>
             <select
@@ -138,7 +138,7 @@ export const Inventory: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Status
             </label>
             <select
@@ -157,83 +157,83 @@ export const Inventory: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="card overflow-x-auto">
+      <div className="card overflow-x-auto p-0">
         {isLoading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 px-5">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p className="mt-2 text-gray-600">Loading inventory...</p>
+            <p className="mt-2 text-gray-500">Loading inventory...</p>
           </div>
         ) : !data?.items || data.items.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No items found</p>
+          <div className="text-center py-12 px-5">
+            <p className="text-gray-500 text-lg mb-4">No items found</p>
             <button
               onClick={() => {
                 setEditingItem(null);
                 setIsModalOpen(true);
               }}
-              className="mt-4 btn-primary"
+              className="btn-primary"
             >
               Add your first item
             </button>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-pale-sky">
-            <thead className="bg-gradient-to-r from-pale-sky/30 to-light-blue/30">
+          <table className="min-w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Item ID
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Type
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Price
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Quantity
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Status
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-pale-sky/50">
+            <tbody className="divide-y divide-gray-100">
               {data.items.map((item) => (
-                <tr key={item.id} className="hover:bg-pale-sky/10 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-primary-600">
                     {item.itemId}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
                     {item.type}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700 tabular-nums">
                     ${Number(item.price).toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700 tabular-nums">
                     {item.quantity}
                     {item.quantity < item.minStock && (
-                      <span className="ml-2 text-yellow-600">⚠️</span>
+                      <span className="ml-2 text-amber-500">⚠</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4 whitespace-nowrap">
                     <span
-                      className={`px-3 py-1 text-xs font-bold rounded-full ${getStatusBadge(
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getStatusBadge(
                         item.status
                       )}`}
                     >
                       {item.status.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                  <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                     <button
                       onClick={() => handleEdit(item)}
                       className="text-primary-600 hover:text-primary-700 font-semibold"

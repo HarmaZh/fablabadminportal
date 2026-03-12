@@ -84,12 +84,12 @@ const mockClasses = [
 ];
 
 const COLOR_CLASSES = [
-  { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800' },
-  { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
-  { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800' },
-  { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-800' },
-  { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-800' },
-  { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-800' },
+  { bg: 'bg-primary-100', text: 'text-primary-700', border: 'border-primary-500' },
+  { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-500' },
+  { bg: 'bg-amber-100',   text: 'text-amber-700',   border: 'border-amber-500'   },
+  { bg: 'bg-rose-100',    text: 'text-rose-700',     border: 'border-rose-500'    },
+  { bg: 'bg-sky-100',     text: 'text-sky-700',      border: 'border-sky-500'     },
+  { bg: 'bg-orange-100',  text: 'text-orange-700',   border: 'border-orange-500'  },
 ];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -109,7 +109,6 @@ function parseSchedule(schedule: string): { days: number[]; startHour: number; e
 
   if (period === 'PM') {
     if (startNum > endNum) {
-      // "10-1 PM" → 10 AM to 1 PM
       startHour = startNum;
       endHour = endNum + 12;
     } else {
@@ -148,7 +147,6 @@ function getMonthGrid(year: number, month: number): (Date | null)[] {
 
 function getClassesForDay(date: Date, cls: typeof mockClasses): typeof mockClasses {
   const dateStr = date.toISOString().split('T')[0];
-  // JS getDay(): Sun=0…Sat=6 → dayMap used by parseSchedule: Mon=0…Sun=6
   const fabDow = date.getDay() === 0 ? 6 : date.getDay() - 1;
   return cls.filter((c) => {
     if (dateStr < c.startDate || dateStr > c.endDate) return false;
@@ -205,15 +203,15 @@ export const Classes: React.FC = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-jet-black">Class Management</h1>
+        <h1 className="text-4xl font-bold text-gray-900">Class Management</h1>
         <div className="flex items-center gap-3">
-          <div className="flex bg-pale-sky/20 rounded-lg p-1">
+          <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setActiveView('table')}
               className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
                 activeView === 'table'
-                  ? 'bg-white text-jet-black shadow-sm'
-                  : 'text-primary-700 hover:text-jet-black'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Table
@@ -222,8 +220,8 @@ export const Classes: React.FC = () => {
               onClick={() => setActiveView('week')}
               className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
                 activeView === 'week'
-                  ? 'bg-white text-jet-black shadow-sm'
-                  : 'text-primary-700 hover:text-jet-black'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Week
@@ -232,8 +230,8 @@ export const Classes: React.FC = () => {
               onClick={() => setActiveView('month')}
               className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-all ${
                 activeView === 'month'
-                  ? 'bg-white text-jet-black shadow-sm'
-                  : 'text-primary-700 hover:text-jet-black'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Month
@@ -246,33 +244,53 @@ export const Classes: React.FC = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="card bg-gradient-to-br from-white to-pale-sky/20 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-primary-600 mb-2 uppercase tracking-wide">
-            Total Classes
-          </h3>
-          <p className="text-4xl font-bold text-jet-black">{classes.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div className="card flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-primary-100">
+            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Classes</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{classes.length}</p>
+          </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-white to-green-50 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-green-700 mb-2 uppercase tracking-wide">
-            Active Classes
-          </h3>
-          <p className="text-4xl font-bold text-green-600">{activeClasses}</p>
+        <div className="card flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-emerald-100">
+            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Active Classes</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{activeClasses}</p>
+          </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-white to-blue-50 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-blue-700 mb-2 uppercase tracking-wide">
-            Total Enrollments
-          </h3>
-          <p className="text-4xl font-bold text-blue-600">{totalEnrollments}</p>
+        <div className="card flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-sky-100">
+            <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Enrollments</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{totalEnrollments}</p>
+          </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-white to-purple-50 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-purple-700 mb-2 uppercase tracking-wide">
-            Avg Enrollment
-          </h3>
-          <p className="text-4xl font-bold text-purple-600">{avgEnrollment}</p>
+        <div className="card flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-violet-100">
+            <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Avg Enrollment</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{avgEnrollment}</p>
+          </div>
         </div>
       </div>
 
@@ -280,7 +298,7 @@ export const Classes: React.FC = () => {
       <div className="card mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Search
             </label>
             <input
@@ -293,7 +311,7 @@ export const Classes: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Status
             </label>
             <select
@@ -312,109 +330,115 @@ export const Classes: React.FC = () => {
 
       {/* Classes Table */}
       {activeView === 'table' && (
-      <div className="card overflow-x-auto">
-        {filteredClasses.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-primary-600 text-lg mb-4">No classes found</p>
-            <button onClick={handleAddNew} className="btn-primary">
-              Add your first class
-            </button>
-          </div>
-        ) : (
-          <table className="min-w-full divide-y divide-pale-sky">
-            <thead className="bg-gradient-to-r from-pale-sky/30 to-light-blue/30">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Course ID
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Class Name
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Instructor
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Schedule
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Enrollment
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Dates
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-jet-black uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-pale-sky/50">
-              {filteredClasses.map((cls) => (
-                <tr
-                  key={cls.id}
-                  className="hover:bg-pale-sky/10 transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-primary-700">
-                    {cls.courseId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-jet-black">
-                    {cls.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600">
-                    {cls.instructor}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600">
-                    {cls.schedule}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 text-sm font-bold rounded-full ${
-                        cls.enrolled >= cls.capacity
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      {cls.enrolled}/{cls.capacity}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 text-xs font-bold rounded-full ${
-                        cls.status === 'Active'
-                          ? 'bg-green-100 text-green-700'
-                          : cls.status === 'Upcoming'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {cls.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-gray-500">Start: {formatDate(cls.startDate)}</span>
-                      <span className="text-xs text-gray-500">End: {formatDate(cls.endDate)}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                    <button
-                      onClick={() => handleEdit(cls)}
-                      className="text-primary-600 hover:text-primary-700 font-semibold"
-                    >
-                      Edit
-                    </button>
-                    <button className="text-blue-600 hover:text-blue-700 font-semibold">
-                      View Enrollments
-                    </button>
-                  </td>
+        <div className="card overflow-x-auto p-0">
+          {filteredClasses.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg mb-4">No classes found</p>
+              <button onClick={handleAddNew} className="btn-primary">
+                Add your first class
+              </button>
+            </div>
+          ) : (
+            <table className="min-w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Course ID
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Class Name
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Instructor
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Schedule
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Enrollment
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Dates
+                  </th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredClasses.map((cls) => {
+                  const colorIdx = classes.findIndex((c) => c.id === cls.id);
+                  const color = COLOR_CLASSES[colorIdx % COLOR_CLASSES.length];
+                  return (
+                    <tr
+                      key={cls.id}
+                      className={`table-row-accent ${color.border} hover:bg-gray-50`}
+                    >
+                      <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-primary-600">
+                        {cls.courseId}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {cls.name}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {cls.instructor}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {cls.schedule}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-100 rounded-full h-1.5 min-w-[60px]">
+                            <div
+                              className="bg-primary-500 h-1.5 rounded-full"
+                              style={{ width: `${Math.min((cls.enrolled / cls.capacity) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 tabular-nums whitespace-nowrap">
+                            {cls.enrolled}/{cls.capacity}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-1 text-xs font-semibold rounded-md ${
+                            cls.status === 'Active'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : cls.status === 'Upcoming'
+                              ? 'bg-sky-100 text-sky-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {cls.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs">{formatDate(cls.startDate)}</span>
+                          <span className="text-xs text-gray-400">{formatDate(cls.endDate)}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                        <button
+                          onClick={() => handleEdit(cls)}
+                          className="text-primary-600 hover:text-primary-700 font-semibold"
+                        >
+                          Edit
+                        </button>
+                        <button className="text-gray-500 hover:text-gray-700 font-semibold">
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
 
       {/* Weekly Calendar */}
@@ -429,13 +453,13 @@ export const Classes: React.FC = () => {
             }}
           >
             {/* Corner cell */}
-            <div className="border-b-2 border-pale-sky border-r border-pale-sky/30 bg-pale-sky/10" />
+            <div className="border-b-2 border-gray-200 border-r border-gray-100 bg-gray-50" />
 
             {/* Day headers */}
             {DAYS.map((day, dayIdx) => (
               <div
                 key={day}
-                className="border-b-2 border-pale-sky border-l border-pale-sky/30 bg-pale-sky/10 flex items-center justify-center text-xs font-bold text-jet-black uppercase tracking-wider"
+                className="border-b-2 border-gray-200 border-l border-gray-100 bg-gray-50 flex items-center justify-center text-xs font-bold text-gray-700 uppercase tracking-wider"
                 style={{ gridColumn: dayIdx + 2, gridRow: 1 }}
               >
                 {day}
@@ -446,10 +470,10 @@ export const Classes: React.FC = () => {
             {HOURS.map((hour, hourIdx) => (
               <div
                 key={hour}
-                className="border-b border-pale-sky/20 flex items-start justify-end pr-2 pt-0.5"
+                className="border-b border-gray-100 flex items-start justify-end pr-2 pt-0.5"
                 style={{ gridColumn: 1, gridRow: hourIdx + 2 }}
               >
-                <span className="text-xs text-primary-600 font-medium">{formatHour(hour)}</span>
+                <span className="text-xs text-gray-400 font-medium">{formatHour(hour)}</span>
               </div>
             ))}
 
@@ -458,7 +482,7 @@ export const Classes: React.FC = () => {
               DAYS.map((_, dayIdx) => (
                 <div
                   key={`bg-${hourIdx}-${dayIdx}`}
-                  className="border-b border-pale-sky/20 border-l border-pale-sky/30"
+                  className="border-b border-gray-100 border-l border-gray-100"
                   style={{ gridColumn: dayIdx + 2, gridRow: hourIdx + 2 }}
                 />
               ))
@@ -479,7 +503,7 @@ export const Classes: React.FC = () => {
                     gridRow: `${parsed.startHour - 7} / ${parsed.endHour - 7}`,
                     zIndex: 1,
                   }}
-                  className={`${color.bg} ${color.border} ${color.text} border rounded p-1 m-0.5 overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer`}
+                  className={`${color.bg} ${color.text} border-l-2 ${color.border} rounded-md p-1 m-0.5 overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer`}
                   onClick={() => handleEdit(cls)}
                 >
                   <p className="text-xs font-bold truncate">{cls.name}</p>
@@ -496,24 +520,24 @@ export const Classes: React.FC = () => {
 
       {/* Monthly Calendar */}
       {activeView === 'month' && (
-        <div className="card">
+        <div className="card p-0 overflow-hidden">
           {/* Month navigation */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
             <button
               onClick={prevMonth}
-              className="p-2 hover:bg-pale-sky/20 rounded-lg transition-colors text-jet-black"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
               aria-label="Previous month"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-lg font-bold text-jet-black">
+            <h2 className="text-base font-bold text-gray-900">
               {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h2>
             <button
               onClick={nextMonth}
-              className="p-2 hover:bg-pale-sky/20 rounded-lg transition-colors text-jet-black"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
               aria-label="Next month"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -523,11 +547,11 @@ export const Classes: React.FC = () => {
           </div>
 
           {/* Day-of-week headers */}
-          <div className="grid grid-cols-7 border-b border-pale-sky/30">
+          <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
               <div
                 key={day}
-                className="text-center text-xs font-bold text-jet-black uppercase tracking-wide py-2"
+                className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide py-2"
               >
                 {day}
               </div>
@@ -535,22 +559,22 @@ export const Classes: React.FC = () => {
           </div>
 
           {/* Day grid */}
-          <div className="grid grid-cols-7 border-t border-l border-pale-sky/30">
+          <div className="grid grid-cols-7 border-t border-l border-gray-100">
             {monthGrid.map((date, idx) => {
               const isToday = date?.toDateString() === new Date().toDateString();
               const dayClasses = date ? getClassesForDay(date, filteredClasses) : [];
               return (
                 <div
                   key={idx}
-                  className={`border-b border-r border-pale-sky/30 min-h-[100px] p-2 ${
-                    !date ? 'bg-pale-sky/5' : 'hover:bg-pale-sky/5 transition-colors'
+                  className={`border-b border-r border-gray-100 min-h-[100px] p-2 ${
+                    !date ? 'bg-gray-50/60' : 'hover:bg-gray-50 transition-colors'
                   }`}
                 >
                   {date && (
                     <>
                       <div
                         className={`text-sm font-semibold mb-1 w-7 h-7 flex items-center justify-center rounded-full ${
-                          isToday ? 'bg-primary-500 text-white' : 'text-jet-black'
+                          isToday ? 'bg-primary-600 text-white' : 'text-gray-700'
                         }`}
                       >
                         {date.getDate()}
@@ -592,7 +616,7 @@ export const Classes: React.FC = () => {
         <form className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Class Name *
               </label>
               <input
@@ -603,7 +627,7 @@ export const Classes: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Instructor *
               </label>
               <input
@@ -616,7 +640,7 @@ export const Classes: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Course ID
             </label>
             <input
@@ -628,7 +652,7 @@ export const Classes: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Description
             </label>
             <textarea
@@ -641,7 +665,7 @@ export const Classes: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Schedule *
               </label>
               <input
@@ -652,7 +676,7 @@ export const Classes: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Max Capacity *
               </label>
               <input
@@ -666,7 +690,7 @@ export const Classes: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Start Date *
               </label>
               <input
@@ -676,7 +700,7 @@ export const Classes: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 End Date *
               </label>
               <input
@@ -688,7 +712,7 @@ export const Classes: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Status *
             </label>
             <select className="input" defaultValue={selectedClass?.status}>
@@ -699,7 +723,7 @@ export const Classes: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-pale-sky">
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
             <button type="button" className="btn-primary flex-1">
               {selectedClass ? 'Update Class' : 'Add Class'}
             </button>
@@ -718,8 +742,8 @@ export const Classes: React.FC = () => {
       </Modal>
 
       {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-pale-sky/20 border border-pale-sky rounded-lg">
-        <p className="text-sm text-jet-black font-medium">
+      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
+        <p className="text-sm text-primary-700 font-medium">
           <strong>Note:</strong> This page uses sample data for UI demonstration.
           Backend integration for class management will be added when ready.
         </p>

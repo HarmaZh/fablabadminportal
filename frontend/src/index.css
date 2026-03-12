@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply bg-background text-dark;
+    @apply bg-background text-gray-900;
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -15,26 +15,37 @@
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-md font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm;
+    @apply px-4 py-2 rounded-md font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
 
   .btn-primary {
-    @apply btn bg-primary-500 text-white hover:bg-primary-600 hover:shadow-md focus:ring-primary-400;
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
   }
 
   .btn-secondary {
-    @apply btn bg-pale-sky text-dark hover:bg-light-blue focus:ring-cool-steel;
+    @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 focus:ring-gray-300;
   }
 
   .btn-danger {
-    @apply btn bg-red-500 text-white hover:bg-red-600 focus:ring-red-400;
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-400;
   }
 
   .input {
-    @apply w-full px-3 py-2 border border-cool-steel/40 rounded-md shadow-sm focus:outline-none focus:ring-primary-400 focus:border-primary-400 bg-white transition-all;
+    @apply w-full px-3 py-2 border border-gray-200 rounded-md bg-white text-gray-900
+           placeholder:text-gray-400
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+           transition-colors;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-sm p-6 border border-pale-sky/30;
+    @apply bg-white rounded-lg border border-gray-100 p-6 shadow-sm;
+  }
+
+  .stat-icon {
+    @apply p-3 rounded-lg flex-shrink-0;
+  }
+
+  .table-row-accent {
+    @apply border-l-4 transition-colors hover:bg-gray-50;
   }
 }

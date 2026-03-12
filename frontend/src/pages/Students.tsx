@@ -86,42 +86,62 @@ export const Students: React.FC = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-jet-black">Student Management</h1>
+        <h1 className="text-4xl font-bold text-gray-900">Student Management</h1>
         <button onClick={handleAddNew} className="btn-primary">
           + Add Student
         </button>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="card bg-gradient-to-br from-white to-pale-sky/20 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-primary-600 mb-2 uppercase tracking-wide">
-            Total Students
-          </h3>
-          <p className="text-4xl font-bold text-jet-black">{students.length}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-primary-100">
+            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Students</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{students.length}</p>
+          </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-white to-green-50 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-green-700 mb-2 uppercase tracking-wide">
-            Active Students
-          </h3>
-          <p className="text-4xl font-bold text-green-600">{activeStudents}</p>
+        <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-emerald-100">
+            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Active Students</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{activeStudents}</p>
+          </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-white to-blue-50 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-blue-700 mb-2 uppercase tracking-wide">
-            Total Enrollments
-          </h3>
-          <p className="text-4xl font-bold text-blue-600">{totalEnrollments}</p>
+        <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-sky-100">
+            <svg className="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Enrollments</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{totalEnrollments}</p>
+          </div>
         </div>
 
-        <div className="card bg-gradient-to-br from-white to-purple-50 hover:shadow-lg transition-shadow">
-          <h3 className="text-sm font-semibold text-purple-700 mb-2 uppercase tracking-wide">
-            Avg Classes/Student
-          </h3>
-          <p className="text-4xl font-bold text-purple-600">
-            {(totalEnrollments / students.length).toFixed(1)}
-          </p>
+        <div className="card flex items-center gap-5 hover:shadow-md transition-shadow">
+          <div className="stat-icon bg-violet-100">
+            <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Avg Classes/Student</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">
+              {(totalEnrollments / students.length).toFixed(1)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -129,7 +149,7 @@ export const Students: React.FC = () => {
       <div className="card mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Search
             </label>
             <input
@@ -142,7 +162,7 @@ export const Students: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Grade
             </label>
             <select
@@ -159,7 +179,7 @@ export const Students: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Status
             </label>
             <select
@@ -176,89 +196,89 @@ export const Students: React.FC = () => {
       </div>
 
       {/* Students Table */}
-      <div className="card overflow-x-auto">
+      <div className="card overflow-x-auto p-0">
         {filteredStudents.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-primary-600 text-lg mb-4">No students found</p>
+            <p className="text-gray-500 text-lg mb-4">No students found</p>
             <button onClick={handleAddNew} className="btn-primary">
               Add your first student
             </button>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-pale-sky">
-            <thead className="bg-gradient-to-r from-pale-sky/30 to-light-blue/30">
+          <table className="min-w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Student ID
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Email
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Phone
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Grade
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Classes
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Status
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-jet-black uppercase tracking-wider">
+                <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-pale-sky/50">
+            <tbody className="divide-y divide-gray-100">
               {filteredStudents.map((student) => (
                 <tr
                   key={student.id}
-                  className="hover:bg-pale-sky/10 transition-colors"
+                  className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-primary-700">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-primary-600">
                     {student.studentId}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-jet-black">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {student.firstName} {student.lastName}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-600">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.phone}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-jet-black">
+                  <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                     {student.grade}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 text-sm font-bold bg-blue-100 text-blue-700 rounded-full">
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    <span className="px-2.5 py-1 text-xs font-semibold bg-sky-100 text-sky-700 rounded-md">
                       {student.enrolledClasses}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-5 py-4 whitespace-nowrap">
                     <span
-                      className={`px-3 py-1 text-xs font-bold rounded-full ${
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-md ${
                         student.status === 'Active'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-gray-100 text-gray-600'
                       }`}
                     >
                       {student.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                  <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                     <button
                       onClick={() => handleEdit(student)}
                       className="text-primary-600 hover:text-primary-700 font-semibold"
                     >
                       Edit
                     </button>
-                    <button className="text-blue-600 hover:text-blue-700 font-semibold">
+                    <button className="text-gray-500 hover:text-gray-700 font-semibold">
                       View Classes
                     </button>
                   </td>
@@ -281,7 +301,7 @@ export const Students: React.FC = () => {
         <form className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 First Name *
               </label>
               <input
@@ -292,7 +312,7 @@ export const Students: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Last Name *
               </label>
               <input
@@ -305,7 +325,7 @@ export const Students: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Email *
             </label>
             <input
@@ -317,7 +337,7 @@ export const Students: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Phone
             </label>
             <input
@@ -330,7 +350,7 @@ export const Students: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Grade *
               </label>
               <select className="input" defaultValue={selectedStudent?.grade}>
@@ -342,7 +362,7 @@ export const Students: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-jet-black mb-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Status *
               </label>
               <select className="input" defaultValue={selectedStudent?.status}>
@@ -353,7 +373,7 @@ export const Students: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Guardian/Parent Email
             </label>
             <input
@@ -364,7 +384,7 @@ export const Students: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-jet-black mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Notes
             </label>
             <textarea
@@ -374,7 +394,7 @@ export const Students: React.FC = () => {
             />
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-pale-sky">
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
             <button type="button" className="btn-primary flex-1">
               {selectedStudent ? 'Update Student' : 'Add Student'}
             </button>
@@ -393,8 +413,8 @@ export const Students: React.FC = () => {
       </Modal>
 
       {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-pale-sky/20 border border-pale-sky rounded-lg">
-        <p className="text-sm text-jet-black font-medium">
+      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
+        <p className="text-sm text-primary-700 font-medium">
           <strong>Note:</strong> This page is using sample data for UI demonstration.
           The backend integration for student management will be added when you're ready to
           connect it to your database.

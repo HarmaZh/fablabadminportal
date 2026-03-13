@@ -1,166 +1,135 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../components/common/Modal';
-
-const mockMachines = [
-  {
-    id: '1',
-    machineId: 'MCH-001',
-    name: 'Prusa i3 MK3S+',
-    type: 'THREE_D_PRINTER',
-    status: 'Operational',
-    location: 'Lab A',
-    lastMaintenance: '2026-02-10',
-    nextMaintenance: '2026-05-10',
-    notes: 'New nozzle installed Feb 2026.',
-  },
-  {
-    id: '2',
-    machineId: 'MCH-002',
-    name: 'Creality Ender 3 V2',
-    type: 'THREE_D_PRINTER',
-    status: 'Operational',
-    location: 'Lab A',
-    lastMaintenance: '2026-01-20',
-    nextMaintenance: '2026-04-20',
-    notes: '',
-  },
-  {
-    id: '3',
-    machineId: 'MCH-003',
-    name: 'Bambu Lab X1 Carbon',
-    type: 'THREE_D_PRINTER',
-    status: 'In Repair',
-    location: 'Lab B',
-    lastMaintenance: '2025-12-05',
-    nextMaintenance: '2026-03-05',
-    notes: 'Extruder clog — parts ordered.',
-  },
-  {
-    id: '4',
-    machineId: 'MCH-004',
-    name: 'Glowforge Pro',
-    type: 'LASER_CUTTER',
-    status: 'Operational',
-    location: 'Lab A',
-    lastMaintenance: '2026-02-01',
-    nextMaintenance: '2026-05-01',
-    notes: 'Lens cleaned.',
-  },
-  {
-    id: '5',
-    machineId: 'MCH-005',
-    name: 'xTool D1 Pro',
-    type: 'LASER_CUTTER',
-    status: 'Offline',
-    location: 'Lab B',
-    lastMaintenance: '2025-11-15',
-    nextMaintenance: '2026-02-15',
-    notes: 'Awaiting inspection. Overdue for maintenance.',
-  },
-  {
-    id: '6',
-    machineId: 'MCH-006',
-    name: 'Badge Button Maker 2.25"',
-    type: 'PIN_PRESS',
-    status: 'Operational',
-    location: 'Storage Room',
-    lastMaintenance: '2026-01-10',
-    nextMaintenance: '2026-07-10',
-    notes: '',
-  },
-  {
-    id: '7',
-    machineId: 'MCH-007',
-    name: 'Badge Button Maker 1.5"',
-    type: 'PIN_PRESS',
-    status: 'Operational',
-    location: 'Storage Room',
-    lastMaintenance: '2026-01-10',
-    nextMaintenance: '2026-07-10',
-    notes: '',
-  },
-  {
-    id: '8',
-    machineId: 'MCH-008',
-    name: 'Cricut Maker 3',
-    type: 'OTHER',
-    status: 'Operational',
-    location: 'Lab B',
-    lastMaintenance: '2026-01-25',
-    nextMaintenance: '2026-06-25',
-    notes: 'Vinyl cutter for art projects.',
-  },
-];
+import { equipmentApi } from '../api/equipment';
+import { Equipment as EquipmentType } from '../types';
 
 const TYPE_LABELS: Record<string, string> = {
   THREE_D_PRINTER: '3D Printer',
   LASER_CUTTER: 'Laser Cutter',
   PIN_PRESS: 'Pin Press',
+  DRONE: 'Drone',
+  ROBOTICS: 'Robotics',
   OTHER: 'Other',
 };
 
-const getDaysUntil = (dateStr: string) => {
+const getDaysUntil = (dateStr?: string) => {
+  if (!dateStr) return null;
   const due = new Date(dateStr);
   const today = new Date();
   return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-const isDueSoon = (dateStr: string) => getDaysUntil(dateStr) <= 30;
+const isDueSoon = (dateStr?: string) => {
+  const days = getDaysUntil(dateStr);
+  return days !== null && days <= 30;
+};
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '—';
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const getStatusBadge = (status: string) => {
+  const map: Record<string, string> = {
+    OPERATIONAL: 'bg-emerald-100 text-emerald-700',
+    MAINTENANCE: 'bg-amber-100 text-amber-700',
+    OUT_OF_SERVICE: 'bg-red-100 text-red-700',
+  };
+  return map[status] ?? 'bg-gray-100 text-gray-600';
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  OPERATIONAL: 'Operational',
+  MAINTENANCE: 'In Repair',
+  OUT_OF_SERVICE: 'Out of Service',
+};
+
 export const Equipment: React.FC = () => {
-  const [machines] = useState(mockMachines);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMachine, setSelectedMachine] = useState<any>(null);
+  const [selectedMachine, setSelectedMachine] = useState<EquipmentType | null>(null);
 
-  const filtered = machines.filter((m) => {
-    const matchesSearch =
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.machineId.toLowerCase().includes(search.toLowerCase());
-    const matchesType = !typeFilter || m.type === typeFilter;
-    const matchesStatus = !statusFilter || m.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
+  const [formData, setFormData] = useState({
+    equipmentId: '',
+    name: '',
+    category: 'OTHER',
+    status: 'OPERATIONAL',
+    lastMaintenance: '',
+    nextMaintenance: '',
+    notes: '',
   });
 
-  const operational = machines.filter((m) => m.status === 'Operational').length;
-  const inRepair = machines.filter((m) => m.status === 'In Repair').length;
-  const maintenanceDue = machines.filter((m) => isDueSoon(m.nextMaintenance)).length;
-  const dueSoonMachines = machines.filter((m) => isDueSoon(m.nextMaintenance));
+  const { data: equipment = [], isLoading, isError } = useQuery({
+    queryKey: ['equipment', { search, categoryFilter, statusFilter }],
+    queryFn: () => equipmentApi.getAll({
+      search: search || undefined,
+      category: categoryFilter || undefined,
+      status: statusFilter || undefined,
+    }),
+  });
 
-  const handleEdit = (machine: any) => {
+  const createMutation = useMutation({
+    mutationFn: equipmentApi.create,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['equipment'] }); setIsModalOpen(false); },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => equipmentApi.update(id, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['equipment'] }); setIsModalOpen(false); },
+  });
+
+  const operational = equipment.filter((m) => m.status === 'OPERATIONAL').length;
+  const inRepair = equipment.filter((m) => m.status === 'MAINTENANCE').length;
+  const dueSoonMachines = equipment.filter((m) => isDueSoon(m.nextMaintenance));
+
+  const handleEdit = (machine: EquipmentType) => {
     setSelectedMachine(machine);
+    setFormData({
+      equipmentId: machine.equipmentId,
+      name: machine.name,
+      category: machine.category,
+      status: machine.status,
+      lastMaintenance: machine.lastMaintenance ? machine.lastMaintenance.split('T')[0] : '',
+      nextMaintenance: machine.nextMaintenance ? machine.nextMaintenance.split('T')[0] : '',
+      notes: machine.notes ?? '',
+    });
     setIsModalOpen(true);
   };
 
   const handleAddNew = () => {
     setSelectedMachine(null);
+    setFormData({ equipmentId: '', name: '', category: 'OTHER', status: 'OPERATIONAL', lastMaintenance: '', nextMaintenance: '', notes: '' });
     setIsModalOpen(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    const map: Record<string, string> = {
-      Operational: 'bg-emerald-100 text-emerald-700',
-      'In Repair': 'bg-amber-100 text-amber-700',
-      Offline: 'bg-red-100 text-red-700',
-      Retired: 'bg-gray-100 text-gray-600',
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      equipmentId: formData.equipmentId,
+      name: formData.name,
+      category: formData.category,
+      status: formData.status,
+      lastMaintenance: formData.lastMaintenance || undefined,
+      nextMaintenance: formData.nextMaintenance || undefined,
+      notes: formData.notes || undefined,
     };
-    return map[status] ?? 'bg-gray-100 text-gray-600';
+    if (selectedMachine) {
+      updateMutation.mutate({ id: selectedMachine.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Equipment</h1>
-        <button onClick={handleAddNew} className="btn-primary">
-          + Add Machine
-        </button>
+        <button onClick={handleAddNew} className="btn-primary">+ Add Machine</button>
       </div>
 
       {/* Maintenance Due Soon Banner */}
@@ -175,13 +144,10 @@ export const Equipment: React.FC = () => {
               {dueSoonMachines.map((m) => {
                 const days = getDaysUntil(m.nextMaintenance);
                 return (
-                  <span
-                    key={m.id}
-                    className="inline-flex items-center gap-1.5 bg-white border border-amber-300 text-amber-900 text-xs font-semibold px-2.5 py-1 rounded-md shadow-sm"
-                  >
+                  <span key={m.id} className="inline-flex items-center gap-1.5 bg-white border border-amber-300 text-amber-900 text-xs font-semibold px-2.5 py-1 rounded-md shadow-sm">
                     {m.name}
-                    <span className={days <= 0 ? 'text-red-600' : 'text-amber-600'}>
-                      {days <= 0 ? 'Overdue' : `${days}d`}
+                    <span className={days !== null && days <= 0 ? 'text-red-600' : 'text-amber-600'}>
+                      {days !== null && days <= 0 ? 'Overdue' : `${days}d`}
                     </span>
                   </span>
                 );
@@ -201,7 +167,7 @@ export const Equipment: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Machines</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{machines.length}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : equipment.length}</p>
           </div>
         </div>
 
@@ -213,7 +179,7 @@ export const Equipment: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Operational</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{operational}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : operational}</p>
           </div>
         </div>
 
@@ -225,7 +191,7 @@ export const Equipment: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">In Repair</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{inRepair}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : inRepair}</p>
           </div>
         </div>
 
@@ -237,7 +203,7 @@ export const Equipment: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Maintenance Due</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{maintenanceDue}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : dueSoonMachines.length}</p>
           </div>
         </div>
       </div>
@@ -256,12 +222,14 @@ export const Equipment: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input">
-              <option value="">All Types</option>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="input">
+              <option value="">All Categories</option>
               <option value="THREE_D_PRINTER">3D Printer</option>
               <option value="LASER_CUTTER">Laser Cutter</option>
               <option value="PIN_PRESS">Pin Press</option>
+              <option value="DRONE">Drone</option>
+              <option value="ROBOTICS">Robotics</option>
               <option value="OTHER">Other</option>
             </select>
           </div>
@@ -269,10 +237,9 @@ export const Equipment: React.FC = () => {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input">
               <option value="">All Statuses</option>
-              <option value="Operational">Operational</option>
-              <option value="In Repair">In Repair</option>
-              <option value="Offline">Offline</option>
-              <option value="Retired">Retired</option>
+              <option value="OPERATIONAL">Operational</option>
+              <option value="MAINTENANCE">In Repair</option>
+              <option value="OUT_OF_SERVICE">Out of Service</option>
             </select>
           </div>
         </div>
@@ -280,7 +247,11 @@ export const Equipment: React.FC = () => {
 
       {/* Table */}
       <div className="card overflow-x-auto p-0">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 text-gray-500">Loading equipment...</div>
+        ) : isError ? (
+          <div className="text-center py-12 text-red-500">Failed to load equipment. Is the backend running?</div>
+        ) : equipment.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg mb-4">No machines found</p>
             <button onClick={handleAddNew} className="btn-primary">Add your first machine</button>
@@ -291,33 +262,29 @@ export const Equipment: React.FC = () => {
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Machine ID</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Name</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Type</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Category</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Location</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Last Maintenance</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Next Maintenance</th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((machine) => (
+              {equipment.map((machine) => (
                 <tr key={machine.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-primary-600">
-                    {machine.machineId}
+                    {machine.equipmentId}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {machine.name}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {TYPE_LABELS[machine.type] ?? machine.type}
+                    {TYPE_LABELS[machine.category] ?? machine.category}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getStatusBadge(machine.status)}`}>
-                      {machine.status}
+                      {STATUS_LABEL[machine.status] ?? machine.status}
                     </span>
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {machine.location}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(machine.lastMaintenance)}
@@ -325,18 +292,18 @@ export const Equipment: React.FC = () => {
                   <td className="px-5 py-4 whitespace-nowrap text-sm">
                     <span className={isDueSoon(machine.nextMaintenance) ? 'font-semibold text-red-600' : 'text-gray-500'}>
                       {formatDate(machine.nextMaintenance)}
-                      {isDueSoon(machine.nextMaintenance) && (
-                        <span className="ml-1.5 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">
-                          {getDaysUntil(machine.nextMaintenance) <= 0 ? 'Overdue' : `${getDaysUntil(machine.nextMaintenance)}d`}
-                        </span>
-                      )}
+                      {isDueSoon(machine.nextMaintenance) && (() => {
+                        const days = getDaysUntil(machine.nextMaintenance);
+                        return (
+                          <span className="ml-1.5 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">
+                            {days !== null && days <= 0 ? 'Overdue' : `${days}d`}
+                          </span>
+                        );
+                      })()}
                     </span>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(machine)}
-                      className="text-primary-600 hover:text-primary-700 font-semibold"
-                    >
+                    <button onClick={() => handleEdit(machine)} className="text-primary-600 hover:text-primary-700 font-semibold">
                       Edit
                     </button>
                   </td>
@@ -353,65 +320,101 @@ export const Equipment: React.FC = () => {
         onClose={() => { setIsModalOpen(false); setSelectedMachine(null); }}
         title={selectedMachine ? 'Edit Machine' : 'Add New Machine'}
       >
-        <form className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Machine Name *</label>
-              <input type="text" className="input" placeholder="Prusa i3 MK3S+" defaultValue={selectedMachine?.name} />
+              <input
+                type="text"
+                required
+                className="input"
+                placeholder="Prusa i3 MK3S+"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Machine ID *</label>
-              <input type="text" className="input" placeholder="MCH-009" defaultValue={selectedMachine?.machineId} />
+              <input
+                type="text"
+                required
+                className="input"
+                placeholder="EQ-001"
+                value={formData.equipmentId}
+                onChange={(e) => setFormData({ ...formData, equipmentId: e.target.value })}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Type *</label>
-              <select className="input" defaultValue={selectedMachine?.type}>
-                <option value="">Select Type</option>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+              <select
+                className="input"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              >
                 <option value="THREE_D_PRINTER">3D Printer</option>
                 <option value="LASER_CUTTER">Laser Cutter</option>
                 <option value="PIN_PRESS">Pin Press</option>
+                <option value="DRONE">Drone</option>
+                <option value="ROBOTICS">Robotics</option>
                 <option value="OTHER">Other</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
-              <select className="input" defaultValue={selectedMachine?.status}>
-                <option value="">Select Status</option>
-                <option value="Operational">Operational</option>
-                <option value="In Repair">In Repair</option>
-                <option value="Offline">Offline</option>
-                <option value="Retired">Retired</option>
+              <select
+                className="input"
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="OPERATIONAL">Operational</option>
+                <option value="MAINTENANCE">In Repair</option>
+                <option value="OUT_OF_SERVICE">Out of Service</option>
               </select>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-            <input type="text" className="input" placeholder="Lab A" defaultValue={selectedMachine?.location} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Last Maintenance</label>
-              <input type="date" className="input" defaultValue={selectedMachine?.lastMaintenance} />
+              <input
+                type="date"
+                className="input"
+                value={formData.lastMaintenance}
+                onChange={(e) => setFormData({ ...formData, lastMaintenance: e.target.value })}
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Next Maintenance</label>
-              <input type="date" className="input" defaultValue={selectedMachine?.nextMaintenance} />
+              <input
+                type="date"
+                className="input"
+                value={formData.nextMaintenance}
+                onChange={(e) => setFormData({ ...formData, nextMaintenance: e.target.value })}
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
-            <textarea rows={3} className="input" placeholder="Maintenance notes, known issues..." defaultValue={selectedMachine?.notes} />
+            <textarea
+              rows={3}
+              className="input"
+              placeholder="Maintenance notes, known issues..."
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-100">
-            <button type="button" className="btn-primary flex-1">
-              {selectedMachine ? 'Update Machine' : 'Add Machine'}
+            <button
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="btn-primary flex-1"
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'Saving...' : selectedMachine ? 'Update Machine' : 'Add Machine'}
             </button>
             <button
               type="button"
@@ -423,14 +426,6 @@ export const Equipment: React.FC = () => {
           </div>
         </form>
       </Modal>
-
-      {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
-        <p className="text-sm text-primary-700 font-medium">
-          <strong>Note:</strong> This page uses sample data for UI demonstration.
-          Backend integration for equipment management will be added when ready.
-        </p>
-      </div>
     </div>
   );
 };

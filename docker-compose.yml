@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # ── PostgreSQL database ──────────────────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
     container_name: fablab_postgres
@@ -12,6 +13,26 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fablab_user -d fablab_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Streamlit analytics dashboard ────────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    container_name: fablab_dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      DATABASE_URL: postgresql://fablab_user:fablab_password@postgres:5432/fablab_db
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

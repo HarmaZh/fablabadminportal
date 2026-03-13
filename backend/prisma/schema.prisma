@@ -1,8 +1,8 @@
 // Prisma Schema for FabLab Admin Portal
-// This schema is designed to be easily modifiable - you can add/remove fields anytime!
+// Database: PostgreSQL
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -20,142 +20,224 @@ model User {
   password  String   // Hashed with bcrypt
   firstName String
   lastName  String
-  role      String @default("STAFF")
+  role      String   @default("STAFF") // ADMIN, STAFF, INSTRUCTOR
   active    Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   inventoryLogs InventoryLog[]
 
   @@map("users")
 }
-
-// Note: Using String instead of enum for SQLite compatibility
-// Valid values: ADMIN, STAFF, INSTRUCTOR
 
 // =============================================================================
 // INVENTORY MANAGEMENT
 // =============================================================================
 
 model InventoryItem {
-  id          String            @id @default(uuid())
-  itemId      String            @unique  // Custom ID (e.g., "CHOC-001")
-  name        String
-  type        String
-  price       Decimal
-  quantity    Int               @default(0)
-  minStock    Int               @default(0)  // For stock alerts
-  status      String
-  notes       String?
-  imageUrl    String?           // For future image uploads
+  id        String  @id @default(uuid())
+  itemId    String  @unique // Custom ID (e.g., "CHOC-001")
+  name      String
+  type      String  // CHOCOLATE, SOAP, PINS, DRONES, TOOLS, MATERIALS, OTHER
+  price     Decimal
+  quantity  Int     @default(0)
+  minStock  Int     @default(0)
+  status    String  // IN_STOCK, LOW_STOCK, OUT_OF_STOCK, DISCONTINUED
+  notes     String?
+  imageUrl  String?
 
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  createdBy   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
 
-  // Relations
-  logs        InventoryLog[]
+  logs InventoryLog[]
 
   @@index([type])
   @@index([status])
   @@map("inventory_items")
 }
 
-// Note: Using String instead of enum for SQLite compatibility
-// InventoryType valid values: CHOCOLATE, SOAP, PINS, DRONES, TOOLS, MATERIALS, OTHER
-// InventoryStatus valid values: IN_STOCK, LOW_STOCK, OUT_OF_STOCK, DISCONTINUED
-
-// =============================================================================
-// AUDIT TRAIL
-// =============================================================================
-
 model InventoryLog {
-  id        String        @id @default(uuid())
-  itemId    String
-  item      InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  userId    String?
-  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id     String        @id @default(uuid())
+  itemId String
+  item   InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  userId String?
+  user   User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  action    String
-  oldValue  String?       // Store previous state as JSON string
-  newValue  String?       // Store new state as JSON string
-  quantity  Int?          // For stock changes
-  notes     String?
+  action   String  // CREATED, UPDATED, DELETED, STOCK_ADDED, STOCK_REMOVED
+  oldValue String? // Previous state as JSON string
+  newValue String? // New state as JSON string
+  quantity Int?    // For stock changes
+  notes    String?
 
-  createdAt DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([itemId])
   @@index([createdAt])
   @@map("inventory_logs")
 }
 
-// Note: Using String instead of enum for SQLite compatibility
-// LogAction valid values: CREATED, UPDATED, DELETED, STOCK_ADDED, STOCK_REMOVED
+// =============================================================================
+// STAFF MANAGEMENT
+// =============================================================================
+
+model Staff {
+  id             String  @id @default(uuid())
+  staffId        String  @unique // e.g., "STF-001"
+  name           String
+  email          String  @unique
+  role           String  @default("INSTRUCTOR") // INSTRUCTOR, ADMIN, COORDINATOR, VOLUNTEER
+  specialization String?
+  phone          String?
+  active         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  classes Class[]
+
+  @@map("staff")
+}
 
 // =============================================================================
-// FUTURE: STUDENT REGISTRATION
+// CLASS MANAGEMENT
 // =============================================================================
-// Uncomment when ready to implement student registration
-//
-// model Student {
-//   id          String   @id @default(uuid())
-//   studentId   String   @unique
-//   firstName   String
-//   lastName    String
-//   email       String   @unique
-//   phone       String?
-//   grade       String?
-//   schoolId    String?
-//
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-//
-//   enrollments CourseEnrollment[]
-//
-//   @@map("students")
-// }
+
+model Class {
+  id                  String  @id @default(uuid())
+  classId             String  @unique // e.g., "CLS-001"
+  name                String
+  description         String?
+  ageGroup            String? // Youth K-5th, Youth 6th-9th, High School 9th-12th, All Ages
+  scheduleDescription String? // e.g., "First Tuesday of the Month"
+  isRecurring         Boolean @default(false)
+  color               String? // Hex color for calendar view
+  status              String  @default("active") // active, inactive, archived
+  maxStudents         Int?
+
+  instructorId String?
+  instructor   Staff?  @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments    Enrollment[]
+  attendances    Attendance[]
+  materialUsages MaterialUsage[]
+
+  @@index([status])
+  @@map("classes")
+}
 
 // =============================================================================
-// FUTURE: CLASS MANAGEMENT
+// STUDENT MANAGEMENT
 // =============================================================================
-// Uncomment when ready to implement class management
-//
-// model Course {
-//   id          String   @id @default(uuid())
-//   courseId    String   @unique
-//   name        String
-//   description String?  @db.Text
-//   instructor  String?
-//   maxStudents Int?
-//   startDate   DateTime?
-//   endDate     DateTime?
-//
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-//
-//   enrollments CourseEnrollment[]
-//
-//   @@map("courses")
-// }
 
-// model CourseEnrollment {
-//   id         String           @id @default(uuid())
-//   studentId  String
-//   student    Student          @relation(fields: [studentId], references: [id])
-//   courseId   String
-//   course     Course           @relation(fields: [courseId], references: [id])
-//
-//   status     EnrollmentStatus @default(ENROLLED)
-//   enrolledAt DateTime         @default(now())
-//
-//   @@unique([studentId, courseId])
-//   @@map("course_enrollments")
-// }
+model Student {
+  id         String  @id @default(uuid())
+  studentId  String  @unique // e.g., "STU-001"
+  name       String
+  email      String  @unique
+  phone      String?
+  parentName String? // For youth classes
+  ageGroup   String?
+  status     String  @default("active") // active, inactive
 
-// enum EnrollmentStatus {
-//   ENROLLED
-//   COMPLETED
-//   DROPPED
-// }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  attendances Attendance[]
+
+  @@index([email])
+  @@map("students")
+}
+
+// =============================================================================
+// ENROLLMENTS
+// =============================================================================
+
+model Enrollment {
+  id               String   @id @default(uuid())
+  studentId        String
+  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId          String
+  class            Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  registrationDate DateTime
+  status           String   @default("confirmed") // confirmed, incomplete, cancelled
+  notes            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, classId])
+  @@index([classId])
+  @@index([status])
+  @@map("enrollments")
+}
+
+// =============================================================================
+// EQUIPMENT
+// =============================================================================
+
+model Equipment {
+  id              String    @id @default(uuid())
+  equipmentId     String    @unique // e.g., "EQ-001"
+  name            String
+  category        String    // 3D_PRINTER, LASER, DRONE, ROBOTICS, ELECTRONICS, OTHER
+  status          String    @default("OPERATIONAL") // OPERATIONAL, MAINTENANCE, OUT_OF_SERVICE
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  notes           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@map("equipment")
+}
+
+// =============================================================================
+// ATTENDANCE
+// =============================================================================
+
+model Attendance {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  date      DateTime
+  status    String   @default("present") // present, late, absent
+  notes     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([classId])
+  @@index([date])
+  @@map("attendance")
+}
+
+// =============================================================================
+// MATERIAL USAGE (populated by ETL pipeline)
+// =============================================================================
+
+model MaterialUsage {
+  id           String   @id @default(uuid())
+  classId      String
+  class        Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  instructor   String
+  materialName String
+  quantityUsed Decimal
+  unit         String   // grams, sheets, units, ml
+  sessionDate  DateTime
+  notes        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([classId])
+  @@index([sessionDate])
+  @@map("material_usage")
+}

@@ -85,3 +85,137 @@ export interface StockAdjustmentForm {
   quantity: number;
   notes?: string;
 }
+
+// Student types
+export interface Student {
+  id: string;
+  studentId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  parentName?: string;
+  ageGroup?: string;
+  status: 'active' | 'inactive' | 'incomplete';
+  createdAt: string;
+  updatedAt: string;
+  enrollments?: Enrollment[];
+  _count?: { enrollments: number };
+}
+
+export interface StudentForm {
+  name: string;
+  email: string;
+  phone?: string;
+  parentName?: string;
+  ageGroup?: string;
+  status?: string;
+}
+
+// Staff types
+export interface StaffMember {
+  id: string;
+  staffId?: string;
+  name: string;
+  email: string;
+  role: 'INSTRUCTOR' | 'ADMIN' | 'COORDINATOR' | 'VOLUNTEER';
+  specialization?: string;
+  phone?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { classes: number };
+}
+
+export interface StaffForm {
+  name: string;
+  email: string;
+  role: string;
+  specialization?: string;
+  phone?: string;
+  active?: boolean;
+}
+
+// Class types
+export interface Class {
+  id: string;
+  name: string;
+  description?: string;
+  ageGroup?: string;
+  scheduleDescription?: string;
+  isRecurring: boolean;
+  instructorId?: string;
+  instructor?: StaffMember;
+  color?: string;
+  status: 'active' | 'inactive' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+  enrollments?: Enrollment[];
+  _count?: { enrollments: number };
+}
+
+export interface ClassForm {
+  name: string;
+  description?: string;
+  ageGroup?: string;
+  scheduleDescription?: string;
+  isRecurring?: boolean;
+  instructorId?: string;
+  color?: string;
+  status?: string;
+}
+
+// Equipment types
+export interface Equipment {
+  id: string;
+  equipmentId: string;
+  name: string;
+  category: string;
+  status: 'OPERATIONAL' | 'MAINTENANCE' | 'OUT_OF_SERVICE';
+  lastMaintenance?: string;
+  nextMaintenance?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EquipmentForm {
+  equipmentId: string;
+  name: string;
+  category: string;
+  status?: string;
+  lastMaintenance?: string;
+  nextMaintenance?: string;
+  notes?: string;
+}
+
+// Enrollment types
+export interface Enrollment {
+  id: string;
+  studentId: string;
+  classId: string;
+  registrationDate: string;
+  status: 'confirmed' | 'incomplete' | 'cancelled';
+  notes?: string;
+  student?: Student;
+  class?: Class;
+}
+
+// Attendance types
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  classId: string;
+  date: string;
+  status: 'present' | 'late' | 'absent';
+  notes?: string;
+  student?: Student;
+  class?: Class;
+}
+
+export interface AttendanceForm {
+  studentId: string;
+  classId: string;
+  date: string;
+  status: string;
+  notes?: string;
+}

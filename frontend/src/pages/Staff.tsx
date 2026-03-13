@@ -1,134 +1,99 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../components/common/Modal';
-
-const mockStaff = [
-  {
-    id: '1',
-    staffId: 'STF-001',
-    firstName: 'Maria',
-    lastName: 'Garcia',
-    email: 'maria.g@fablab.org',
-    phone: '(555) 101-2020',
-    role: 'Instructor',
-    specialties: ['3D Printing', 'Laser Cutting'],
-    school: null,
-    status: 'Active',
-    classesCount: 3,
-  },
-  {
-    id: '2',
-    staffId: 'STF-002',
-    firstName: 'James',
-    lastName: 'Lee',
-    email: 'james.l@fablab.org',
-    phone: '(555) 202-3030',
-    role: 'Instructor',
-    specialties: ['Electronics', 'Robotics'],
-    school: null,
-    status: 'Active',
-    classesCount: 2,
-  },
-  {
-    id: '3',
-    staffId: 'STF-003',
-    firstName: 'Diana',
-    lastName: 'Torres',
-    email: 'diana.t@fablab.org',
-    phone: '(555) 303-4040',
-    role: 'Admin',
-    specialties: ['Operations', 'Scheduling'],
-    school: null,
-    status: 'Active',
-    classesCount: 0,
-  },
-  {
-    id: '4',
-    staffId: 'STF-004',
-    firstName: 'Kevin',
-    lastName: 'Nguyen',
-    email: 'kevin.n@fablab.org',
-    phone: '(555) 404-5050',
-    role: 'Volunteer',
-    specialties: ['Pin Press', 'Arts & Crafts'],
-    school: null,
-    status: 'Active',
-    classesCount: 1,
-  },
-  {
-    id: '5',
-    staffId: 'STF-005',
-    firstName: 'Priya',
-    lastName: 'Patel',
-    email: 'priya.p@fablab.org',
-    phone: '(555) 505-6060',
-    role: 'YMCA Coordinator',
-    specialties: ['3D Printing', 'Pin Press', 'Arts & Crafts'],
-    school: 'Lincoln Middle School',
-    status: 'Active',
-    classesCount: 2,
-  },
-  {
-    id: '6',
-    staffId: 'STF-006',
-    firstName: 'Marcus',
-    lastName: 'Williams',
-    email: 'marcus.w@fablab.org',
-    phone: '(555) 606-7070',
-    role: 'YMCA Coordinator',
-    specialties: ['Laser Cutting', 'Electronics'],
-    school: 'Roosevelt Middle School',
-    status: 'Active',
-    classesCount: 2,
-  },
-];
+import { staffApi } from '../api/staff';
+import { StaffMember } from '../types';
 
 const ROLE_BADGE: Record<string, string> = {
-  Instructor: 'bg-primary-100 text-primary-700',
-  Admin: 'bg-violet-100 text-violet-700',
-  'YMCA Coordinator': 'bg-sky-100 text-sky-700',
-  Volunteer: 'bg-emerald-100 text-emerald-700',
+  INSTRUCTOR: 'bg-primary-100 text-primary-700',
+  ADMIN: 'bg-violet-100 text-violet-700',
+  COORDINATOR: 'bg-sky-100 text-sky-700',
+  VOLUNTEER: 'bg-emerald-100 text-emerald-700',
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  INSTRUCTOR: 'Instructor',
+  ADMIN: 'Admin',
+  COORDINATOR: 'Coordinator',
+  VOLUNTEER: 'Volunteer',
 };
 
 export const Staff: React.FC = () => {
-  const [staff] = useState(mockStaff);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState<any>(null);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
-  const filtered = staff.filter((s) => {
-    const matchesSearch =
-      s.firstName.toLowerCase().includes(search.toLowerCase()) ||
-      s.lastName.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase()) ||
-      s.staffId.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = !roleFilter || s.role === roleFilter;
-    const matchesStatus = !statusFilter || s.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'INSTRUCTOR',
+    specialization: '',
+    active: true,
   });
 
-  const activeInstructors = staff.filter((s) => s.role === 'Instructor' && s.status === 'Active').length;
-  const ymcaCount = staff.filter((s) => s.role === 'YMCA Coordinator').length;
-  const volunteers = staff.filter((s) => s.role === 'Volunteer').length;
+  const { data: staff = [], isLoading, isError } = useQuery({
+    queryKey: ['staff', { search, roleFilter }],
+    queryFn: () => staffApi.getAll({ search: search || undefined, role: roleFilter || undefined }),
+  });
 
-  const handleEdit = (member: any) => {
+  const createMutation = useMutation({
+    mutationFn: staffApi.create,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['staff'] }); setIsModalOpen(false); },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => staffApi.update(id, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['staff'] }); setIsModalOpen(false); },
+  });
+
+  const activeInstructors = staff.filter((s) => s.role === 'INSTRUCTOR' && s.active).length;
+  const coordinators = staff.filter((s) => s.role === 'COORDINATOR').length;
+  const volunteers = staff.filter((s) => s.role === 'VOLUNTEER').length;
+
+  const handleEdit = (member: StaffMember) => {
     setSelectedStaff(member);
+    setFormData({
+      name: member.name,
+      email: member.email,
+      phone: member.phone ?? '',
+      role: member.role,
+      specialization: member.specialization ?? '',
+      active: member.active,
+    });
     setIsModalOpen(true);
   };
 
   const handleAddNew = () => {
     setSelectedStaff(null);
+    setFormData({ name: '', email: '', phone: '', role: 'INSTRUCTOR', specialization: '', active: true });
     setIsModalOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || undefined,
+      role: formData.role,
+      specialization: formData.specialization || undefined,
+      active: formData.active,
+    };
+    if (selectedStaff) {
+      updateMutation.mutate({ id: selectedStaff.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Staff & Instructors</h1>
-        <button onClick={handleAddNew} className="btn-primary">
-          + Add Staff
-        </button>
+        <button onClick={handleAddNew} className="btn-primary">+ Add Staff</button>
       </div>
 
       {/* Stats Cards */}
@@ -141,7 +106,7 @@ export const Staff: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Staff</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{staff.length}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : staff.length}</p>
           </div>
         </div>
 
@@ -153,7 +118,7 @@ export const Staff: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Active Instructors</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{activeInstructors}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : activeInstructors}</p>
           </div>
         </div>
 
@@ -164,8 +129,8 @@ export const Staff: React.FC = () => {
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">YMCA Outreach</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{ymcaCount}</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Coordinators</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : coordinators}</p>
           </div>
         </div>
 
@@ -177,21 +142,21 @@ export const Staff: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Volunteers</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{volunteers}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : volunteers}</p>
           </div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="card mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Search</label>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, email, or ID..."
+              placeholder="Search by name or email..."
               className="input"
             />
           </div>
@@ -199,18 +164,10 @@ export const Staff: React.FC = () => {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
             <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="input">
               <option value="">All Roles</option>
-              <option value="Instructor">Instructor</option>
-              <option value="Admin">Admin</option>
-              <option value="YMCA Coordinator">YMCA Coordinator</option>
-              <option value="Volunteer">Volunteer</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input">
-              <option value="">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="INSTRUCTOR">Instructor</option>
+              <option value="ADMIN">Admin</option>
+              <option value="COORDINATOR">Coordinator</option>
+              <option value="VOLUNTEER">Volunteer</option>
             </select>
           </div>
         </div>
@@ -218,7 +175,11 @@ export const Staff: React.FC = () => {
 
       {/* Table */}
       <div className="card overflow-x-auto p-0">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 text-gray-500">Loading staff...</div>
+        ) : isError ? (
+          <div className="text-center py-12 text-red-500">Failed to load staff. Is the backend running?</div>
+        ) : staff.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg mb-4">No staff found</p>
             <button onClick={handleAddNew} className="btn-primary">Add your first staff member</button>
@@ -231,62 +192,42 @@ export const Staff: React.FC = () => {
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Name</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Role</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Email</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Specialties</th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">School</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Specialization</th>
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Classes</th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((member) => (
+              {staff.map((member) => (
                 <tr key={member.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-primary-600">
-                    {member.staffId}
+                    {member.staffId ?? '—'}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {member.firstName} {member.lastName}
+                    {member.name}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${ROLE_BADGE[member.role] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {member.role}
+                      {ROLE_LABEL[member.role] ?? member.role}
                     </span>
                   </td>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">{member.email}</td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {member.email}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {member.specialties.slice(0, 2).map((s) => (
-                        <span key={s} className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-md whitespace-nowrap">
-                          {s}
-                        </span>
-                      ))}
-                      {member.specialties.length > 2 && (
-                        <span className="bg-primary-50 text-primary-600 text-xs px-2 py-0.5 rounded-md whitespace-nowrap">
-                          +{member.specialties.length - 2} more
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-sm">
-                    {member.school ? (
-                      <span className="text-gray-700 font-medium">{member.school}</span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
+                    {member.specialization ?? '—'}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${
-                      member.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {member.status}
+                    <span className="px-2.5 py-1 text-xs font-semibold bg-sky-100 text-sky-700 rounded-md">
+                      {member._count?.classes ?? 0}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${member.active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {member.active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(member)}
-                      className="text-primary-600 hover:text-primary-700 font-semibold"
-                    >
+                    <button onClick={() => handleEdit(member)} className="text-primary-600 hover:text-primary-700 font-semibold">
                       Edit
                     </button>
                   </td>
@@ -303,73 +244,87 @@ export const Staff: React.FC = () => {
         onClose={() => { setIsModalOpen(false); setSelectedStaff(null); }}
         title={selectedStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
       >
-        <form className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
-              <input type="text" className="input" placeholder="Maria" defaultValue={selectedStaff?.firstName} />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
-              <input type="text" className="input" placeholder="Garcia" defaultValue={selectedStaff?.lastName} />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+            <input
+              type="text"
+              required
+              className="input"
+              placeholder="Maria Garcia"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
-            <input type="email" className="input" placeholder="staff@fablab.org" defaultValue={selectedStaff?.email} />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-            <input type="tel" className="input" placeholder="(555) 123-4567" defaultValue={selectedStaff?.phone} />
+            <input
+              type="email"
+              required
+              className="input"
+              placeholder="staff@fablab.org"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Role *</label>
-              <select className="input" defaultValue={selectedStaff?.role}>
-                <option value="">Select Role</option>
-                <option value="Instructor">Instructor</option>
-                <option value="Admin">Admin</option>
-                <option value="YMCA Coordinator">YMCA Coordinator</option>
-                <option value="Volunteer">Volunteer</option>
-              </select>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+              <input
+                type="tel"
+                className="input"
+                placeholder="(555) 123-4567"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
-              <select className="input" defaultValue={selectedStaff?.status ?? 'Active'}>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Role *</label>
+              <select
+                className="input"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              >
+                <option value="INSTRUCTOR">Instructor</option>
+                <option value="ADMIN">Admin</option>
+                <option value="COORDINATOR">Coordinator</option>
+                <option value="VOLUNTEER">Volunteer</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Specialties</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Specialization</label>
             <input
               type="text"
               className="input"
-              placeholder="e.g. 3D Printing, Laser Cutting"
-              defaultValue={selectedStaff?.specialties?.join(', ')}
+              placeholder="e.g. 3D Printing & Laser Cutting"
+              value={formData.specialization}
+              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
             />
-            <p className="mt-1 text-xs text-gray-400">Separate multiple specialties with commas.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Outreach School</label>
-            <input
-              type="text"
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+            <select
               className="input"
-              placeholder="e.g. Lincoln Middle School"
-              defaultValue={selectedStaff?.school ?? ''}
-            />
-            <p className="mt-1 text-xs text-gray-400">For YMCA Coordinators — leave blank if not applicable.</p>
+              value={formData.active ? 'active' : 'inactive'}
+              onChange={(e) => setFormData({ ...formData, active: e.target.value === 'active' })}
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-100">
-            <button type="button" className="btn-primary flex-1">
-              {selectedStaff ? 'Update Staff Member' : 'Add Staff Member'}
+            <button
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="btn-primary flex-1"
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'Saving...' : selectedStaff ? 'Update Staff Member' : 'Add Staff Member'}
             </button>
             <button
               type="button"
@@ -381,14 +336,6 @@ export const Staff: React.FC = () => {
           </div>
         </form>
       </Modal>
-
-      {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
-        <p className="text-sm text-primary-700 font-medium">
-          <strong>Note:</strong> This page uses sample data for UI demonstration.
-          Backend integration for staff management will be added when ready.
-        </p>
-      </div>
     </div>
   );
 };

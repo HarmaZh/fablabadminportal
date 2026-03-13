@@ -1,87 +1,8 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../components/common/Modal';
-
-// Mock class data for UI demonstration
-const mockClasses = [
-  {
-    id: '1',
-    courseId: 'CLS-2026-001',
-    name: 'Introduction to 3D Printing',
-    instructor: 'John Smith',
-    schedule: 'Mon & Wed 4-6 PM',
-    capacity: 15,
-    enrolled: 12,
-    status: 'Active',
-    startDate: '2026-01-05',
-    endDate: '2026-06-30',
-    description: 'Learn the basics of 3D modeling and printing',
-  },
-  {
-    id: '2',
-    courseId: 'CLS-2026-002',
-    name: 'Advanced Laser Cutting',
-    instructor: 'Sarah Johnson',
-    schedule: 'Tue & Thu 3-5 PM',
-    capacity: 12,
-    enrolled: 8,
-    status: 'Active',
-    startDate: '2026-01-06',
-    endDate: '2026-05-30',
-    description: 'Advanced techniques for laser cutting and design',
-  },
-  {
-    id: '3',
-    courseId: 'CLS-2026-003',
-    name: 'Electronics Basics',
-    instructor: 'Mike Chen',
-    schedule: 'Wed 6-8 PM',
-    capacity: 15,
-    enrolled: 15,
-    status: 'Active',
-    startDate: '2026-02-01',
-    endDate: '2026-05-30',
-    description: 'Introduction to circuits and basic electronics',
-  },
-  {
-    id: '4',
-    courseId: 'CLS-2026-004',
-    name: 'Robotics Workshop',
-    instructor: 'Emily Davis',
-    schedule: 'Fri 4-7 PM',
-    capacity: 10,
-    enrolled: 5,
-    status: 'Active',
-    startDate: '2026-03-01',
-    endDate: '2026-06-30',
-    description: 'Build and program your own robot',
-  },
-  {
-    id: '5',
-    courseId: 'CLS-2025-015',
-    name: 'Woodworking 101',
-    instructor: 'David Brown',
-    schedule: 'Sat 10-1 PM',
-    capacity: 10,
-    enrolled: 10,
-    status: 'Completed',
-    startDate: '2025-09-15',
-    endDate: '2025-12-15',
-    description: 'Learn essential woodworking skills and safety',
-  },
-  {
-    id: '6',
-    courseId: 'CLS-2026-005',
-    name: 'CNC Machining',
-    instructor: 'Lisa White',
-    schedule: 'Thu 5-7 PM',
-    capacity: 8,
-    enrolled: 6,
-    status: 'Active',
-    startDate: '2026-01-18',
-    endDate: '2026-05-30',
-    description: 'Master CNC machine operation and programming',
-  },
-];
+import { classesApi } from '../api/classes';
+import { Class } from '../types';
 
 const COLOR_CLASSES = [
   { bg: 'bg-primary-100', text: 'text-primary-700', border: 'border-primary-500' },
@@ -145,55 +66,123 @@ function getMonthGrid(year: number, month: number): (Date | null)[] {
   return grid;
 }
 
-function getClassesForDay(date: Date, cls: typeof mockClasses): typeof mockClasses {
-  const dateStr = date.toISOString().split('T')[0];
+interface ClassView {
+  id: string;
+  courseId: string;
+  name: string;
+  instructor: string;
+  schedule: string;
+  capacity: number;
+  enrolled: number;
+  status: string;
+  description: string;
+}
+
+function toClassView(cls: Class, idx: number): ClassView {
+  return {
+    id: cls.id,
+    courseId: `CLS-${String(idx + 1).padStart(3, '0')}`,
+    name: cls.name,
+    instructor: cls.instructor?.name ?? 'Unassigned',
+    schedule: cls.scheduleDescription ?? '',
+    capacity: 20,
+    enrolled: cls._count?.enrollments ?? 0,
+    status: cls.status === 'active' ? 'Active' : cls.status === 'completed' ? 'Completed' : 'Inactive',
+    description: cls.description ?? '',
+  };
+}
+
+function getClassesForDay(date: Date, cls: ClassView[]): ClassView[] {
   const fabDow = date.getDay() === 0 ? 6 : date.getDay() - 1;
   return cls.filter((c) => {
-    if (dateStr < c.startDate || dateStr > c.endDate) return false;
     const parsed = parseSchedule(c.schedule);
     return parsed ? parsed.days.includes(fabDow) : false;
   });
 }
 
 export const Classes: React.FC = () => {
-  const [classes] = useState(mockClasses);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [selectedClass, setSelectedClass] = useState<ClassView | null>(null);
   const [activeView, setActiveView] = useState<'table' | 'week' | 'month'>('table');
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    ageGroup: '',
+    scheduleDescription: '',
+    status: 'active',
+    isRecurring: false,
+  });
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['classes', { search, statusFilter }],
+    queryFn: () => classesApi.getAll({ search: search || undefined, status: statusFilter || undefined }),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: classesApi.create,
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['classes'] }); setIsModalOpen(false); },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => classesApi.update(id, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['classes'] }); setIsModalOpen(false); },
+  });
+
+  const rawClasses = data?.classes ?? [];
+  const classes: ClassView[] = rawClasses.map((c, i) => toClassView(c, i));
 
   const filteredClasses = classes.filter((cls) => {
     const matchesSearch =
       cls.name.toLowerCase().includes(search.toLowerCase()) ||
-      cls.courseId.toLowerCase().includes(search.toLowerCase()) ||
       cls.instructor.toLowerCase().includes(search.toLowerCase());
-
     const matchesStatus = !statusFilter || cls.status === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
 
   const activeClasses = classes.filter((c) => c.status === 'Active').length;
   const totalEnrollments = classes.reduce((sum, c) => sum + c.enrolled, 0);
-  const avgEnrollment = classes.length > 0
-    ? (totalEnrollments / classes.length).toFixed(1)
-    : '0';
+  const avgEnrollment = classes.length > 0 ? (totalEnrollments / classes.length).toFixed(1) : '0';
 
-  const handleEdit = (cls: any) => {
+  const handleEdit = (cls: ClassView) => {
+    const raw = rawClasses.find((r) => r.id === cls.id);
     setSelectedClass(cls);
+    setFormData({
+      name: cls.name,
+      description: cls.description,
+      ageGroup: raw?.ageGroup ?? '',
+      scheduleDescription: cls.schedule,
+      status: raw?.status ?? 'active',
+      isRecurring: raw?.isRecurring ?? false,
+    });
     setIsModalOpen(true);
   };
 
   const handleAddNew = () => {
     setSelectedClass(null);
+    setFormData({ name: '', description: '', ageGroup: '', scheduleDescription: '', status: 'active', isRecurring: false });
     setIsModalOpen(true);
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      name: formData.name,
+      description: formData.description || undefined,
+      ageGroup: formData.ageGroup || undefined,
+      scheduleDescription: formData.scheduleDescription || undefined,
+      status: formData.status,
+      isRecurring: formData.isRecurring,
+    };
+    if (selectedClass) {
+      updateMutation.mutate({ id: selectedClass.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   const monthGrid = getMonthGrid(calendarMonth.getFullYear(), calendarMonth.getMonth());
@@ -253,7 +242,7 @@ export const Classes: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Classes</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{classes.length}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : data?.total ?? 0}</p>
           </div>
         </div>
 
@@ -265,7 +254,7 @@ export const Classes: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Active Classes</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{activeClasses}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : activeClasses}</p>
           </div>
         </div>
 
@@ -277,7 +266,7 @@ export const Classes: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Enrollments</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{totalEnrollments}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : totalEnrollments}</p>
           </div>
         </div>
 
@@ -289,7 +278,7 @@ export const Classes: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Avg Enrollment</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{avgEnrollment}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : avgEnrollment}</p>
           </div>
         </div>
       </div>
@@ -331,12 +320,14 @@ export const Classes: React.FC = () => {
       {/* Classes Table */}
       {activeView === 'table' && (
         <div className="card overflow-x-auto p-0">
-          {filteredClasses.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-500">Loading classes...</div>
+          ) : isError ? (
+            <div className="text-center py-12 text-red-500">Failed to load classes. Is the backend running?</div>
+          ) : filteredClasses.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg mb-4">No classes found</p>
-              <button onClick={handleAddNew} className="btn-primary">
-                Add your first class
-              </button>
+              <button onClick={handleAddNew} className="btn-primary">Add your first class</button>
             </div>
           ) : (
             <table className="min-w-full">
@@ -359,9 +350,6 @@ export const Classes: React.FC = () => {
                   </th>
                   <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
                     Status
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                    Dates
                   </th>
                   <th className="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wide">
                     Actions
@@ -415,21 +403,12 @@ export const Classes: React.FC = () => {
                           {cls.status}
                         </span>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-xs">{formatDate(cls.startDate)}</span>
-                          <span className="text-xs text-gray-400">{formatDate(cls.endDate)}</span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                      <td className="px-5 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => handleEdit(cls)}
                           className="text-primary-600 hover:text-primary-700 font-semibold"
                         >
                           Edit
-                        </button>
-                        <button className="text-gray-500 hover:text-gray-700 font-semibold">
-                          View
                         </button>
                       </td>
                     </tr>
@@ -607,132 +586,80 @@ export const Classes: React.FC = () => {
       {/* Add/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedClass(null);
-        }}
+        onClose={() => { setIsModalOpen(false); setSelectedClass(null); }}
         title={selectedClass ? 'Edit Class' : 'Add New Class'}
       >
-        <form className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Class Name *
-              </label>
-              <input
-                type="text"
-                className="input"
-                placeholder="Introduction to 3D Printing"
-                defaultValue={selectedClass?.name}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Instructor *
-              </label>
-              <input
-                type="text"
-                className="input"
-                placeholder="John Smith"
-                defaultValue={selectedClass?.instructor}
-              />
-            </div>
-          </div>
-
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Course ID
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Class Name *</label>
             <input
               type="text"
+              required
               className="input"
-              placeholder="CLS-2024-001"
-              defaultValue={selectedClass?.courseId}
+              placeholder="Introduction to 3D Printing"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Description
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
             <textarea
               rows={3}
               className="input"
               placeholder="Course description..."
-              defaultValue={selectedClass?.description}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Schedule *
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Age Group</label>
               <input
                 type="text"
                 className="input"
-                placeholder="Mon & Wed 4-6 PM"
-                defaultValue={selectedClass?.schedule}
+                placeholder="e.g. Youth, Adult"
+                value={formData.ageGroup}
+                onChange={(e) => setFormData({ ...formData, ageGroup: e.target.value })}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Max Capacity *
-              </label>
-              <input
-                type="number"
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
+              <select
                 className="input"
-                placeholder="15"
-                defaultValue={selectedClass?.capacity}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Start Date *
-              </label>
-              <input
-                type="date"
-                className="input"
-                defaultValue={selectedClass?.startDate}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                End Date *
-              </label>
-              <input
-                type="date"
-                className="input"
-                defaultValue={selectedClass?.endDate}
-              />
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="completed">Completed</option>
+              </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Status *
-            </label>
-            <select className="input" defaultValue={selectedClass?.status}>
-              <option value="">Select Status</option>
-              <option value="Active">Active</option>
-              <option value="Upcoming">Upcoming</option>
-              <option value="Completed">Completed</option>
-            </select>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Schedule</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="e.g. Mon & Wed 4-6 PM"
+              value={formData.scheduleDescription}
+              onChange={(e) => setFormData({ ...formData, scheduleDescription: e.target.value })}
+            />
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-100">
-            <button type="button" className="btn-primary flex-1">
-              {selectedClass ? 'Update Class' : 'Add Class'}
+            <button
+              type="submit"
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="btn-primary flex-1"
+            >
+              {createMutation.isPending || updateMutation.isPending ? 'Saving...' : selectedClass ? 'Update Class' : 'Add Class'}
             </button>
             <button
               type="button"
-              onClick={() => {
-                setIsModalOpen(false);
-                setSelectedClass(null);
-              }}
+              onClick={() => { setIsModalOpen(false); setSelectedClass(null); }}
               className="btn-secondary flex-1"
             >
               Cancel
@@ -740,14 +667,6 @@ export const Classes: React.FC = () => {
           </div>
         </form>
       </Modal>
-
-      {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
-        <p className="text-sm text-primary-700 font-medium">
-          <strong>Note:</strong> This page uses sample data for UI demonstration.
-          Backend integration for class management will be added when ready.
-        </p>
-      </div>
     </div>
   );
 };

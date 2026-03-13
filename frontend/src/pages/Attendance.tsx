@@ -1,137 +1,66 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../components/common/Modal';
+import { attendanceApi } from '../api/attendance';
+import { AttendanceRecord } from '../types';
 
-const mockSessions = [
-  {
-    id: 'SES-001',
-    classId: '1',
-    className: 'Introduction to 3D Printing',
-    instructor: 'Maria Garcia',
-    date: '2026-02-24',
-    totalStudents: 12,
-    present: 10,
-    late: 1,
-    absent: 1,
-  },
-  {
-    id: 'SES-002',
-    classId: '1',
-    className: 'Introduction to 3D Printing',
-    instructor: 'Maria Garcia',
-    date: '2026-02-17',
-    totalStudents: 12,
-    present: 9,
-    late: 0,
-    absent: 3,
-  },
-  {
-    id: 'SES-003',
-    classId: '2',
-    className: 'Advanced Laser Cutting',
-    instructor: 'James Lee',
-    date: '2026-02-25',
-    totalStudents: 8,
-    present: 7,
-    late: 1,
-    absent: 0,
-  },
-  {
-    id: 'SES-004',
-    classId: '2',
-    className: 'Advanced Laser Cutting',
-    instructor: 'James Lee',
-    date: '2026-02-18',
-    totalStudents: 8,
-    present: 6,
-    late: 0,
-    absent: 2,
-  },
-  {
-    id: 'SES-005',
-    classId: '3',
-    className: 'Pin Press & Badge Making',
-    instructor: 'Priya Patel',
-    date: '2026-02-26',
-    totalStudents: 15,
-    present: 12,
-    late: 1,
-    absent: 2,
-  },
-  {
-    id: 'SES-006',
-    classId: '3',
-    className: 'Pin Press & Badge Making',
-    instructor: 'Priya Patel',
-    date: '2026-02-19',
-    totalStudents: 15,
-    present: 10,
-    late: 0,
-    absent: 5,
-  },
-  {
-    id: 'SES-007',
-    classId: '1',
-    className: 'Introduction to 3D Printing',
-    instructor: 'Maria Garcia',
-    date: '2026-01-27',
-    totalStudents: 12,
-    present: 7,
-    late: 0,
-    absent: 5,
-  },
-  {
-    id: 'SES-008',
-    classId: '3',
-    className: 'Pin Press & Badge Making',
-    instructor: 'Priya Patel',
-    date: '2026-01-29',
-    totalStudents: 15,
-    present: 14,
-    late: 1,
-    absent: 0,
-  },
-];
+interface Session {
+  key: string;
+  classId: string;
+  className: string;
+  instructor: string;
+  date: string;
+  records: AttendanceRecord[];
+  present: number;
+  late: number;
+  absent: number;
+  total: number;
+}
 
-// Static mock roster for the "View Roster" modal
-const mockRosters: Record<string, { studentId: string; name: string; status: 'Present' | 'Absent' | 'Late' }[]> = {
-  'SES-001': [
-    { studentId: 'STU-001', name: 'Emma Johnson', status: 'Present' },
-    { studentId: 'STU-002', name: 'Liam Smith', status: 'Present' },
-    { studentId: 'STU-003', name: 'Olivia Williams', status: 'Present' },
-    { studentId: 'STU-004', name: 'Noah Brown', status: 'Absent' },
-    { studentId: 'STU-005', name: 'Ava Davis', status: 'Present' },
-    { studentId: 'STU-006', name: 'Isabella Martinez', status: 'Present' },
-    { studentId: 'STU-007', name: 'Sophia Anderson', status: 'Late' },
-    { studentId: 'STU-008', name: 'Mia Taylor', status: 'Present' },
-    { studentId: 'STU-009', name: 'Charlotte Thomas', status: 'Present' },
-    { studentId: 'STU-010', name: 'Amelia Jackson', status: 'Present' },
-    { studentId: 'STU-011', name: 'Harper White', status: 'Present' },
-    { studentId: 'STU-012', name: 'Evelyn Harris', status: 'Present' },
-  ],
-};
-
-// Static class list for the "Take Attendance" modal
-const MOCK_CLASS_STUDENTS = [
-  'Emma Johnson', 'Liam Smith', 'Olivia Williams', 'Noah Brown',
-  'Ava Davis', 'Isabella Martinez', 'Sophia Anderson', 'Mia Taylor',
-  'Charlotte Thomas', 'Amelia Jackson',
-];
+function groupIntoSessions(records: AttendanceRecord[]): Session[] {
+  const map = new Map<string, Session>();
+  for (const r of records) {
+    const dateStr = r.date.split('T')[0];
+    const key = `${r.classId}::${dateStr}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        classId: r.classId,
+        className: r.class?.name ?? r.classId,
+        instructor: r.class?.instructor?.name ?? '—',
+        date: dateStr,
+        records: [],
+        present: 0,
+        late: 0,
+        absent: 0,
+        total: 0,
+      });
+    }
+    const session = map.get(key)!;
+    session.records.push(r);
+    session.total++;
+    if (r.status === 'present') session.present++;
+    else if (r.status === 'late') session.late++;
+    else session.absent++;
+  }
+  return Array.from(map.values()).sort((a, b) => b.date.localeCompare(a.date));
+}
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr + 'T00:00:00');
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const getAttendanceBadge = (present: number, total: number) => {
-  const pct = total > 0 ? (present / total) * 100 : 0;
+const getAttendanceBadge = (present: number, late: number, total: number) => {
+  const pct = total > 0 ? ((present + late) / total) * 100 : 0;
   if (pct >= 80) return 'bg-emerald-100 text-emerald-700';
   if (pct >= 50) return 'bg-amber-100 text-amber-700';
   return 'bg-red-100 text-red-700';
 };
 
-const getRosterBadge = (status: string) => {
-  if (status === 'Present') return 'bg-emerald-100 text-emerald-700';
-  if (status === 'Late') return 'bg-amber-100 text-amber-700';
+const getStatusBadge = (status: string) => {
+  if (status === 'present') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'late') return 'bg-amber-100 text-amber-700';
   return 'bg-red-100 text-red-700';
 };
 
@@ -139,21 +68,18 @@ const currentMonth = new Date().getMonth();
 const currentYear = new Date().getFullYear();
 
 export const Attendance: React.FC = () => {
-  const [sessions] = useState(mockSessions);
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [rosterSession, setRosterSession] = useState<Session | null>(null);
 
-  const [rosterSession, setRosterSession] = useState<any>(null);
-  const [isTakeModalOpen, setIsTakeModalOpen] = useState(false);
+  const { data: records = [], isLoading, isError } = useQuery({
+    queryKey: ['attendance'],
+    queryFn: () => attendanceApi.getAll(),
+  });
 
-  // Take Attendance modal state
-  const [takeClass, setTakeClass] = useState('');
-  const [takeDate, setTakeDate] = useState(new Date().toISOString().split('T')[0]);
-  const [presentMap, setPresentMap] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(MOCK_CLASS_STUDENTS.map((n) => [n, true]))
-  );
+  const sessions = groupIntoSessions(records);
 
   const filtered = sessions.filter((s) => {
     const matchesSearch =
@@ -171,23 +97,16 @@ export const Attendance: React.FC = () => {
   }).length;
 
   const avgRate = sessions.length > 0
-    ? Math.round(sessions.reduce((acc, s) => acc + ((s.present + s.late) / s.totalStudents) * 100, 0) / sessions.length)
+    ? Math.round(sessions.reduce((acc, s) => acc + ((s.present + s.late) / (s.total || 1)) * 100, 0) / sessions.length)
     : 0;
 
   const perfectSessions = sessions.filter((s) => s.absent === 0 && s.late === 0).length;
-  const uniqueClasses = new Set(sessions.map((s) => s.classId)).size;
-
-  const uniqueClassOptions = Array.from(
-    new Map(sessions.map((s) => [s.classId, s.className])).entries()
-  );
+  const uniqueClassOptions = Array.from(new Map(sessions.map((s) => [s.classId, s.className])).entries());
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Attendance Tracking</h1>
-        <button onClick={() => setIsTakeModalOpen(true)} className="btn-primary">
-          + Take Attendance
-        </button>
       </div>
 
       {/* Stats Cards */}
@@ -200,7 +119,7 @@ export const Attendance: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Sessions This Month</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{sessionsThisMonth}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : sessionsThisMonth}</p>
           </div>
         </div>
 
@@ -212,7 +131,7 @@ export const Attendance: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Avg Attendance Rate</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{avgRate}%</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : `${avgRate}%`}</p>
           </div>
         </div>
 
@@ -224,7 +143,7 @@ export const Attendance: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Perfect Sessions</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{perfectSessions}</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : perfectSessions}</p>
           </div>
         </div>
 
@@ -235,8 +154,8 @@ export const Attendance: React.FC = () => {
             </svg>
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Classes Tracked</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{uniqueClasses}</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Records</p>
+            <p className="text-3xl font-bold text-gray-900 leading-none tabular-nums">{isLoading ? '—' : records.length}</p>
           </div>
         </div>
       </div>
@@ -276,10 +195,13 @@ export const Attendance: React.FC = () => {
 
       {/* Table */}
       <div className="card overflow-x-auto p-0">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 text-gray-500">Loading attendance records...</div>
+        ) : isError ? (
+          <div className="text-center py-12 text-red-500">Failed to load attendance. Is the backend running?</div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">No sessions found</p>
-            <button onClick={() => setIsTakeModalOpen(true)} className="btn-primary">Take Attendance</button>
+            <p className="text-gray-500 text-lg">No sessions found</p>
           </div>
         ) : (
           <table className="min-w-full">
@@ -297,24 +219,18 @@ export const Attendance: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map((session) => {
-                const pct = session.totalStudents > 0
-                  ? Math.round(((session.present + session.late) / session.totalStudents) * 100)
+                const pct = session.total > 0
+                  ? Math.round(((session.present + session.late) / session.total) * 100)
                   : 0;
                 return (
-                  <tr key={session.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={session.key} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {formatDate(session.date)}
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {session.className}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {session.instructor}
-                    </td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-900">{session.className}</td>
+                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500">{session.instructor}</td>
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-emerald-700">
-                        {session.present}
-                      </span>
+                      <span className="text-sm font-semibold text-emerald-700">{session.present}</span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
                       <span className={`text-sm font-semibold ${session.late > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
@@ -327,7 +243,7 @@ export const Attendance: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getAttendanceBadge(session.present + session.late, session.totalStudents)}`}>
+                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getAttendanceBadge(session.present, session.late, session.total)}`}>
                         {pct}%
                       </span>
                     </td>
@@ -355,28 +271,26 @@ export const Attendance: React.FC = () => {
       >
         {rosterSession && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-500 font-medium">{formatDate(rosterSession.date)} · {rosterSession.instructor}</p>
+            <p className="text-sm text-gray-500 font-medium">
+              {formatDate(rosterSession.date)} · {rosterSession.instructor}
+            </p>
             <div className="flex gap-4 text-sm font-semibold">
               <span className="text-emerald-700">Present: {rosterSession.present}</span>
               <span className="text-amber-600">Late: {rosterSession.late}</span>
               <span className="text-red-600">Absent: {rosterSession.absent}</span>
             </div>
             <div className="space-y-2 max-h-80 overflow-y-auto">
-              {(mockRosters[rosterSession.id] ?? Array.from({ length: rosterSession.totalStudents }, (_, i) => ({
-                studentId: `STU-${String(i + 1).padStart(3, '0')}`,
-                name: `Student ${i + 1}`,
-                status: i < rosterSession.present ? 'Present' : 'Absent',
-              } as { studentId: string; name: string; status: 'Present' | 'Absent' | 'Late' }))).map((student) => (
+              {rosterSession.records.map((r) => (
                 <div
-                  key={student.studentId}
+                  key={r.id}
                   className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg border border-gray-100"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{student.name}</p>
-                    <p className="text-xs text-gray-400">{student.studentId}</p>
+                    <p className="text-sm font-medium text-gray-900">{r.student?.name ?? r.studentId}</p>
+                    <p className="text-xs text-gray-400">{r.student?.studentId ?? r.studentId}</p>
                   </div>
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-md ${getRosterBadge(student.status)}`}>
-                    {student.status}
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-md capitalize ${getStatusBadge(r.status)}`}>
+                    {r.status}
                   </span>
                 </div>
               ))}
@@ -387,94 +301,6 @@ export const Attendance: React.FC = () => {
           </div>
         )}
       </Modal>
-
-      {/* Take Attendance Modal */}
-      <Modal
-        isOpen={isTakeModalOpen}
-        onClose={() => setIsTakeModalOpen(false)}
-        title="Take Attendance"
-      >
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Class *</label>
-              <select value={takeClass} onChange={(e) => setTakeClass(e.target.value)} className="input">
-                <option value="">Select Class</option>
-                {uniqueClassOptions.map(([id, name]) => (
-                  <option key={id} value={id}>{name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Date *</label>
-              <input type="date" value={takeDate} onChange={(e) => setTakeDate(e.target.value)} className="input" />
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold text-gray-700 mb-3">Student Roster</p>
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {MOCK_CLASS_STUDENTS.map((name) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg border border-gray-100"
-                >
-                  <span className="text-sm font-medium text-gray-900">{name}</span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPresentMap((prev) => ({ ...prev, [name]: true }))}
-                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-                        presentMap[name] ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                      }`}
-                    >
-                      Present
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPresentMap((prev) => ({ ...prev, [name]: false }))}
-                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-                        !presentMap[name] ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200'
-                      }`}
-                    >
-                      Absent
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="text-sm text-gray-500 font-medium">
-            {Object.values(presentMap).filter(Boolean).length} / {MOCK_CLASS_STUDENTS.length} present
-          </div>
-
-          <div className="flex gap-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              className="btn-primary flex-1"
-              onClick={() => setIsTakeModalOpen(false)}
-            >
-              Submit Attendance
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsTakeModalOpen(false)}
-              className="btn-secondary flex-1"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Sample Data Notice */}
-      <div className="mt-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
-        <p className="text-sm text-primary-700 font-medium">
-          <strong>Note:</strong> This page uses sample data for UI demonstration.
-          Backend integration for attendance tracking will be added when ready.
-        </p>
-      </div>
     </div>
   );
 };
